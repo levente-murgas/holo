@@ -1,0 +1,47 @@
+# CI/CD: run the tests on every push and pull request; on main, deploy to GitHub Pages only if they pass.
+name: Test and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:      # "Run workflow" button in the Actions tab
+
+# Read-only by default; the deploy job asks for the extra permissions it needs.
+permissions:
+  contents: read
+
+# One deploy at a time; don't cancel a deploy that's already running.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm test
+
+  deploy:
+    needs: test           # the gate: only runs if the test job passed
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: '.'       # no build step: publish the repo as-is
+      - id: deployment
+        uses: actions/deploy-pages@v5
