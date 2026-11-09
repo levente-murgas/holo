@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Holo — phone hologram MVP</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-mode="test" data-layout="single" data-src="rec">
+<canvas id="stage"></canvas>
+<div id="hint">tap anywhere for controls</div>
+
+<div id="panel">
+  <div class="grab"></div>
+  <h1><span>Holo</span> · hologram MVP</h1>
+  <p class="sub">Phone flat, stand on top, room dark, screen brightness at max.</p>
+
+  <div class="row">
+    <div class="seg" data-k="mode">
+      <button data-v="test">Test pattern</button>
+      <button data-v="video">Video</button>
+      <button data-v="message">Message</button>
+    </div>
+  </div>
+
+  <div class="row only-video">
+    <label class="btn file">📹 Record or choose a video
+      <input id="file" type="file" accept="video/*">
+    </label>
+    <div id="status"></div>
+  </div>
+
+  <div class="row only-video">
+    <div class="lbl">Video type</div>
+    <div class="seg" data-k="src">
+      <button data-v="rec">My recording</button>
+      <button data-v="holo1">Holo · 1 view</button>
+      <button data-v="holo4">Holo · 4 views</button>
+    </div>
+    <div class="only-holo4" style="margin-top:10px">
+      <div class="lbl">Which view to show</div>
+      <div class="seg" data-k="view">
+        <button data-v="bottom">Bottom</button>
+        <button data-v="top">Top</button>
+        <button data-v="left">Left</button>
+        <button data-v="right">Right</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row only-message">
+    <input id="msg" type="text" maxlength="60" placeholder="Your message">
+  </div>
+
+  <div class="row">
+    <div class="lbl">Stand type</div>
+    <div class="seg" data-k="layout">
+      <button data-v="single">CD case (1 pane)</button>
+      <button data-v="pyramid">Pyramid (4 sides)</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="toggles">
+      <button class="chip" id="rot">Rotate 180°</button>
+      <button class="chip" data-t="mirror">Mirror</button>
+      <button class="chip only-video-inline" data-t="sound">Sound</button>
+      <button class="chip" id="play">Play / pause</button>
+    </div>
+  </div>
+
+  <div class="row only-video">
+    <div class="lbl">Background cut <b data-o="thr"></b></div>
+    <input type="range" data-k="thr" min="0" max="0.6" step="0.01">
+    <div class="lbl">Edge softness <b data-o="soft"></b></div>
+    <input type="range" data-k="soft" min="0.01" max="0.4" step="0.01">
+    <div class="only-rec">
+      <div class="lbl">Face oval <b data-o="oval"></b></div>
+      <input type="range" data-k="oval" min="0.4" max="1.6" step="0.01">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="lbl">Brightness <b data-o="gain"></b></div>
+    <input type="range" data-k="gain" min="0.6" max="3" step="0.05">
+    <div class="lbl">Size <b data-o="size"></b></div>
+    <input type="range" data-k="size" min="0.3" max="1.6" step="0.01">
+    <div class="lbl">Position <b data-o="pos"></b></div>
+    <input type="range" data-k="pos" min="-1" max="1" step="0.01">
+    <div class="only-pyramid">
+      <div class="lbl">Distance from centre <b data-o="gap"></b></div>
+      <input type="range" data-k="gap" min="0.5" max="1.8" step="0.01">
+    </div>
+  </div>
+
+  <div class="row btns">
+    <button class="btn primary" id="go">Start hologram</button>
+  </div>
+
+  <details>
+    <summary>Tips for a good hologram</summary>
+    <ul>
+      <li><b>Line it up first:</b> in Test pattern, rotate and mirror until “TOP” is upright and “HOLO” reads normally in the reflection. These settings are saved.</li>
+      <li><b>Filming:</b> front camera, dark wall or room behind you, a lamp or a phone torch lighting your face from the front. Wear something light-coloured, because dark clothes disappear.</li>
+      <li><b>Background cut:</b> raise it until the background is fully black; lower it if your face starts losing pieces. Shrink the face oval to crop away anything that's left.</li>
+      <li>Black is invisible in the reflection, so anything that isn't pure black will glow.</li>
+      <li>Sending: send her the raw video on WhatsApp. She opens this page, taps Video and picks it, and her phone does the processing.</li>
+    </ul>
+  </details>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

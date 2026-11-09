@@ -1,0 +1,31 @@
+// Entry point: load settings, set up the screen and controls, run the per-frame loop.
+
+import { S, loadSettings, keyFor } from './settings.js';
+import { createProcessor } from './processing.js';
+import { video, videoState, testPattern, renderMessage } from './sources.js';
+import { createStage, drawFrame } from './layout.js';
+import { initUI, panelOpen } from './ui.js';
+
+loadSettings();
+const canvas = document.getElementById('stage');
+const stage = createStage(canvas);
+const processVideo = createProcessor();
+initUI(canvas);
+
+function currentSource(t) {
+  if (S.mode === 'video') {
+    if (!videoState.ready) return null;
+    return processVideo(video, {
+      src: S.src, view: S.view, oval: S.oval, gain: S.gain,
+      thr: S[keyFor('thr')], soft: S[keyFor('soft')],
+    });
+  }
+  if (S.mode === 'message') return renderMessage(t, S.msg);
+  return testPattern;
+}
+
+function frame(t) {
+  drawFrame(stage, currentSource(t), S, t, panelOpen());
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
