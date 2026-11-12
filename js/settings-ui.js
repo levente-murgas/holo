@@ -3,7 +3,6 @@
 import { getPushStatus, enablePush, disablePush, resyncPush, forgetDevice, shouldAskNow, markAsked } from './push.js';
 import { S, save } from './settings.js';
 import { askOrientationPermission } from './surprise.js';
-import { tryLatestAsSurprise } from './inbox-ui.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -23,6 +22,8 @@ async function renderSettings() {
   const member = signedInMember();
   $('#surpriseToggle').textContent = S.surprise ? 'On' : 'Off';
   $('#surpriseToggle').classList.toggle('on', !!S.surprise);
+  $('#surpriseOwnToggle').hidden = !S.surprise;
+  $('#surpriseOwnToggle').classList.toggle('on', !!S.surpriseOwn);
   $('#accountRow').hidden = !(st && st.user);
   if (st && st.user) $('#accountWho').textContent = 'Signed in as ' + (st.me ? st.me.name + ' (' + st.user.email + ')' : st.user.email);
 
@@ -72,8 +73,10 @@ export function initSettings(theInbox) {
     renderSettings();
   });
 
-  $('#surpriseTry').addEventListener('click', () => {
-    $('#surpriseTryStatus').textContent = signedInMember() ? tryLatestAsSurprise() : 'Sign in under Inbox first.';
+  $('#surpriseOwnToggle').addEventListener('click', () => {
+    S.surpriseOwn = !S.surpriseOwn; save();
+    if (S.surpriseOwn && S.surprise) askOrientationPermission();
+    renderSettings();
   });
 
   $('#pushOn').addEventListener('click', turnOn);

@@ -9,5 +9,6 @@ export function isFaceDown(beta, wasDown = false) {
   return wasDown ? tilt > 120 : tilt > 150;
 }
 
-// Surprise mode applies to messages someone else sent you.
-export const isSurprise = (enabled, msg, myId) => !!(enabled && msg && msg.sender !== myId);
+// Surprise mode applies to messages someone else sent you, and to your own ones too if includeOwn.
+export const isSurprise = (enabled, msg, myId, includeOwn = false) =>
+  !!(enabled && msg && (includeOwn || msg.sender !== myId));

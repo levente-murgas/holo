@@ -24,4 +24,6 @@ test('isSurprise: only for received messages, only when enabled', () => {
   assert.equal(isSurprise(true, fromMe, 'me'), false);
   assert.equal(isSurprise(false, fromPartner, 'me'), false);
   assert.equal(isSurprise(true, null, 'me'), false);
+  assert.equal(isSurprise(true, fromMe, 'me', true), true);        // "Also for messages I sent"
+  assert.equal(isSurprise(false, fromMe, 'me', true), false);      // ...only while Surprise mode is on
 });

@@ -65,18 +65,8 @@ function render() {
   }
 }
 
-// Settings → "Try it": open the newest message (yours included) as a surprise. For testing.
-export function tryLatestAsSurprise() {
-  const list = (st && st.messages) || [];
-  const m = list.find((x) => x.clip_path) || list[0];   // newest clip, else newest message
-  if (!m) return 'No messages yet: send one first.';
-  $('#settings').hidden = true;
-  play(m, { forceSurprise: true });
-  return '';
-}
-
-async function play(m, { forceSurprise = false } = {}) {
-  const surprise = forceSurprise || isSurprise(S.surprise, m, st.user.id);
+async function play(m) {
+  const surprise = isSurprise(S.surprise, m, st.user.id, S.surpriseOwn);
   // Must run inside the tap, before any await (iPhone only shows the motion prompt for a tap).
   const permission = surprise ? askOrientationPermission() : null;
   try {
