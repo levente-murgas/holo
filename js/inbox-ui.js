@@ -6,6 +6,7 @@ import { videoState, loadVideoFile } from './sources.js';
 import { isConfigured, createInbox } from './inbox.js';
 import { timeAgo } from './inbox-logic.js';
 import { isInstalled } from './pwa.js';
+import { initSettings, onInboxState } from './settings-ui.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -83,11 +84,13 @@ export async function initInbox() {
   if (!isConfigured()) {
     $('#authBox').hidden = true;
     setStatus('Sending is not set up yet: fill in js/config.js (see SETUP.md).');
+    initSettings(null);
     return;
   }
   try {
-    inbox = await createInbox((s) => { st = s; render(); });
-  } catch (e) { setStatus('Could not load Supabase: ' + (e.message || e)); return; }
+    inbox = await createInbox((s) => { st = s; render(); onInboxState(s); });
+  } catch (e) { setStatus('Could not load Supabase: ' + (e.message || e)); initSettings(null); return; }
+  initSettings(inbox);
 
   $('#signin').addEventListener('click', async () => {
     const email = $('#email').value.trim(); if (!email) return;
@@ -105,7 +108,6 @@ export async function initInbox() {
     try { await inbox.verifyCode(email, code); setStatus(''); $('#code').value = ''; $('#codeBox').hidden = true; }
     catch (e) { setStatus('Code not accepted: ' + (e.message || e) + '. Use the newest email, within an hour.'); }
   });
-  $('#signout').addEventListener('click', () => inbox.signOut());
   $('#send').addEventListener('click', async () => {
     const b = $('#send'); b.disabled = true;
     try {

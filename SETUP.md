@@ -25,6 +25,34 @@ The page works without this; the Inbox just says "Sending is not set up yet". Th
    ```
    and save. The installed app on iPhone can't use the link (it opens Safari, which keeps its own sign-in), so it signs in with this code instead.
 
+## Notifications (one time, with the Supabase CLI)
+
+Run these from the repo root in a normal Terminal. Install the CLI with `brew install supabase/tap/supabase`, or put `npx supabase@latest` wherever it says `supabase`.
+
+```sh
+supabase login                                          # opens the browser once
+supabase link --project-ref lyvdwzokcyathfebfgch        # asks for the database password
+
+# 1. the push_subscriptions table (supabase/migrations/*_push_subscriptions.sql)
+supabase db push --remote --dry-run                     # should list only the push_subscriptions migration
+supabase db push --remote
+
+# 2. VAPID keys: generated and stored as secrets in one go, the private key is never printed
+eval "$(npx -y web-push@3.6.7 generate-vapid-keys --json | node -e 'const k=JSON.parse(require("fs").readFileSync(0));console.log(`supabase secrets set VAPID_PUBLIC_KEY=${k.publicKey} VAPID_PRIVATE_KEY=${k.privateKey}`)')"
+supabase secrets set VAPID_SUBJECT=mailto:you@example.com   # your email: push services contact it if something goes wrong
+
+# 3. the function that sends the notifications (supabase/functions/notify)
+supabase functions deploy notify --use-api              # --use-api: no Docker needed
+```
+
+Notes:
+- `supabase/schema.sql` was applied by hand earlier, so it is **not** a migration; `db push` only applies files in `supabase/migrations/`. New database changes go there (`supabase migration new <name>`).
+- In CLI v3, `db push` targets a local database unless you pass `--remote`.
+- Generate the VAPID keys **once**. New keys make every existing subscription invalid, so each phone would have to turn notifications off and on again.
+- `verify_jwt = false` for `notify` in `supabase/config.toml` is intentional: the platform check only understands the legacy keys, so the function checks the signed-in user itself (`withSupabase({ auth: 'user' })`).
+
+Then on each phone (installed app): sign in → *Turn on* in the dialog (or ⚙︎ Settings → *Turn on notifications*) → *Send a test*.
+
 ## Using it
 - **Install it first** (recommended): iPhone: Safari → Share → *Add to Home Screen*. Android: Chrome menu → *Add to Home screen* / *Install app*. Open Holo from the icon.
 - *Inbox* → enter your email → *Email me a sign-in link* → type the **code** from the email into the box that appears (or, in a normal browser tab, tap the link instead). You stay signed in on that phone after that. The installed app and the browser tab are signed in separately.
@@ -35,5 +63,5 @@ The page works without this; the Inbox just says "Sending is not set up yet". Th
 ## Limits worth knowing
 - Clips up to 50 MB each; the free tier has 1 GB storage in total. Old clips aren't deleted automatically yet.
 - Supabase's built-in email sender is rate-limited (a few sign-in emails per hour). Fine for two people who sign in once per phone; set up custom SMTP if it gets in the way.
-- No push notifications: the receiver only sees new clips while the page is open or the next time they open it.
+- Push notifications work only where the browser supports them: on iPhone only in the installed app (iOS 16.4+), on Android in Chrome. A device that never turned them on only sees new clips when Holo is open.
 - Sign-in links and codes work once and expire after about an hour; asking for a new one cancels the old one.

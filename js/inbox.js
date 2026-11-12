@@ -52,14 +52,18 @@ export async function createInbox(onChange) {
     channel = sb.channel('inbox')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'recipient=eq.' + user.id },
         (p) => addMessages([p.new]))
-      .subscribe(async (status) => {
-        if (status !== 'SUBSCRIBED') return;
-        const { data, error: e } = await sb.from('messages').select('*').order('created_at', { ascending: false }).limit(50);
-        if (e) return fail(e);
-        addMessages(data);
-      });
+      .subscribe((status) => { if (status === 'SUBSCRIBED') catchUp(); });
     emit();
   }
+
+  async function catchUp() {
+    if (!state.me) return;
+    const { data, error } = await sb.from('messages').select('*').order('created_at', { ascending: false }).limit(50);
+    if (error) return fail(error);
+    addMessages(data);
+  }
+  // Coming back to the app (e.g. from a notification): the live connection may have slept, so re-fetch.
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') catchUp(); });
 
   function stop() {
     if (channel) { sb.removeChannel(channel); channel = null; }
@@ -93,6 +97,28 @@ export async function createInbox(onChange) {
     },
     async signOut() { await sb.auth.signOut(); },
 
+    // ---- push notifications (see js/push.js and supabase/functions/notify) ----
+    async vapidKey() {
+      const { data, error } = await sb.functions.invoke('notify', { body: { action: 'key' } });
+      if (error) throw error;
+      if (!data || !data.key) throw new Error('Notifications are not set up on the server yet (VAPID keys missing).');
+      return data.key;
+    },
+    async saveSubscription(row) {
+      const { error } = await sb.from('push_subscriptions').upsert({ ...row, user_id: state.user.id }, { onConflict: 'endpoint' });
+      if (error) throw error;
+    },
+    async removeSubscription(endpoint) {
+      const { error } = await sb.from('push_subscriptions').delete().eq('endpoint', endpoint);
+      if (error) throw error;
+    },
+    // Returns { devices, sent, removed } from the function.
+    async notify(body) {
+      const { data, error } = await sb.functions.invoke('notify', { body });
+      if (error) throw error;
+      return data;
+    },
+
     // Send a clip (file + how to show it) and/or a text to the partner.
     async send({ file, text, src = 'rec', view = 'bottom' }) {
       if (!state.me || !state.partner) throw new Error('Not signed in');
@@ -111,6 +137,9 @@ export async function createInbox(onChange) {
         throw error;
       }
       addMessages([data]);
+      // Ping the recipient's phone. Sending already worked, so a failed notification is only logged.
+      sb.functions.invoke('notify', { body: { action: 'message', message_id: data.id } })
+        .then(({ error: e }) => { if (e) console.warn('notify failed', e); });
       return data;
     },
 

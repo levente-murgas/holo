@@ -37,6 +37,12 @@ js/pwa.js             service worker registration, isInstalled(), screen wake lo
 sw.js                 service worker: network-first for own files, cached copy when offline
 manifest.webmanifest  app name, icons, full-screen display
 icons/                icon.svg (source) + PNGs rendered from it with headless Chrome
+js/push.js            push on this device: permission, subscribe, save/remove the subscription
+js/push-logic.js      pure helpers: keyToBytes, subscriptionRow, pushStatus, shouldAsk
+js/settings-ui.js     Settings page (⚙︎ in the panel header: notifications, account/sign out) + one-time notifications dialog
+supabase/config.toml  Supabase CLI project config (from `supabase init`); [functions.notify] verify_jwt = false
+supabase/migrations/  CLI migrations (push_subscriptions); schema.sql was applied by hand and is not a migration
+supabase/functions/notify/  Edge Function: sends web push to the recipient's devices (npm:web-push for encryption, fetch to send)
 js/config.js          Supabase URL + publishable key (empty = sending off)
 js/inbox.js           Supabase client: sign-in, send, live receive + catch-up, download, mark seen
 js/inbox-logic.js     pure helpers: clipPath, mergeMessages, unseenCount, partnerOf, timeAgo
@@ -66,7 +72,7 @@ package.json          `npm test`, `npm run serve` (no dependencies)
   read -rs "KEY?Secret key: " && echo && curl -s -X POST "https://lyvdwzokcyathfebfgch.supabase.co/auth/v1/admin/generate_link" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" -d '{"type":"magiclink","email":"<EMAIL>","redirect_to":"https://levente-murgas.github.io/holo/"}' | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("action_link") or d, end="")' | pbcopy; unset KEY
   ```
   It copies a one-time sign-in link; open it once in the browser to sign in. Parse the JSON (as above): copying the raw `action_link` keeps `&` instead of `&` and fails with "Verify requires a verification type".
-- **Tests:** `npm test` (Node 24): 17 passing, covering crop geometry, the brightness cut ramp, and inbox helpers (clip paths, merge/de-dup of live vs fetched messages, unseen count, partner lookup, time labels).
+- **Tests:** `npm test` (Node 24): 21 passing, covering crop geometry, the brightness cut ramp, inbox helpers (clip paths, merge/de-dup of live vs fetched messages, unseen count, partner lookup, time labels) and push helpers (key decoding, subscription rows, status, when to ask).
 - **Verified so far:** headless Chrome renders all four views of a synthetic 4-view video upright with the grey background cut to black; test pattern and message render; no JS errors.
 - **Limitations:** sign-in verified on two devices, but sending/receiving between two different accounts (live Realtime delivery to the recipient) is not yet tested; no push notifications; old clips are never deleted; no depth sensor (web pages can't access Face ID/TrueDepth); not yet tested on a real phone, the real stand or a real internet holo video; the file picker hasn't been tested end to end (headless Chrome couldn't load a picked file).
 
@@ -86,7 +92,7 @@ package.json          `npm test`, `npm run serve` (no dependencies)
 2. Test on both phones with the printed stand: tune defaults (rotation, mirror, key threshold), try a real internet holo video (1-view and 4-view) and confirm which view convention it uses.
 3. Inbox testing: send a text and a clip from the laptop, reload on the phone and play the sent clip (checks upload, RLS and playback across devices). Live delivery can only be tested once the partner signs in; delete test rows in Table Editor → `messages` beforehand if you don't want them in the partner's inbox.
 4. PWA (built 2026-11-12, verified in headless Chrome: service worker active, 19 files cached, no installability errors; not yet installed on a real phone): add `{{ .Token }}` to the Magic Link email template (SETUP.md step 9), install on both phones, sign in inside the app with the code, check full screen and that the screen stays awake. When files are added, add them to `SHELL` in `sw.js`; bump `CACHE` only to force-drop old copies.
-5. Push notifications for new messages (web push via the service worker + a Supabase Edge Function / database webhook on `messages` insert). iPhone only allows it in the installed app.
+5. Push notifications: code built 2026-11-12, server side not deployed yet. Run the CLI steps in SETUP.md ("Notifications"), then on the phone: dialog → Turn on → ⚙︎ Settings → Send a test. Design: after sending, the page calls `notify` with the message id (no database trigger); the function checks the caller is the sender, reads the recipient's `push_subscriptions` with the secret key, sends, and deletes subscriptions that return 404/410. The dialog shows once per device (`localStorage holo.pushAsked`); "Not now" leaves it in Settings only. Sign-out removes this device's subscription row. Verified: web-push encryption under Deno 2 (decrypted round trip), function type-checks, dialog/settings flow in headless Chrome; not yet on a real phone.
 6. Clip clean-up (storage is 1 GB).
 7. Later: live holo calls with WebRTC, using Supabase Realtime for signaling and Cloudflare TURN.
 

@@ -20,7 +20,10 @@
 
 <div id="panel">
   <div class="grab"></div>
-  <h1><span>Holo</span> · hologram MVP</h1>
+  <div class="head">
+    <h1><span>Holo</span> · hologram MVP</h1>
+    <button class="icon-btn" id="openSettings" aria-label="Settings" title="Settings">⚙︎</button>
+  </div>
   <p class="sub">Phone flat, stand on top, room dark, screen brightness at max.</p>
 
   <div class="row">
@@ -74,7 +77,6 @@
       <div class="sub" id="who"></div>
       <button class="btn primary" id="send" disabled>Send</button>
       <ul id="msgs"></ul>
-      <button class="chip" id="signout">Sign out</button>
     </div>
     <div class="sub" id="inboxStatus"></div>
   </div>
@@ -135,6 +137,42 @@
       <li><b>Sending:</b> sign in under Inbox, load a video (or write a message), then tap Send. Clips are sent raw and processed on the receiving phone, using the video type you picked.</li>
     </ul>
   </details>
+</div>
+
+<!-- Settings: its own full-screen page, opened with the gear in the panel header -->
+<section id="settings" class="page" hidden>
+  <div class="head">
+    <button class="icon-btn" id="closeSettings" aria-label="Back" title="Back">‹</button>
+    <h1>Settings</h1>
+  </div>
+
+  <div class="row">
+    <div class="lbl">Notifications</div>
+    <div class="sub" id="pushState"></div>
+    <div class="btns">
+      <button class="btn primary" id="pushOn" hidden>Turn on notifications</button>
+      <button class="btn" id="pushOff" hidden>Turn off</button>
+      <button class="btn" id="pushTest" hidden>Send a test</button>
+    </div>
+    <div class="sub" id="pushStatus"></div>
+  </div>
+
+  <div class="row" id="accountRow" hidden>
+    <div class="lbl">Account</div>
+    <div class="sub" id="accountWho"></div>
+    <button class="chip" id="signout">Sign out</button>
+  </div>
+</section>
+
+<!-- Asked once per device, right after the first sign-in -->
+<div id="pushDialog" class="dialog" hidden>
+  <div class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="pushDialogTitle">
+    <h2 id="pushDialogTitle">Turn on notifications?</h2>
+    <p class="sub">Get a buzz when a new holo or message arrives, even when Holo is closed.</p>
+    <button class="btn primary" id="pushDialogYes">Turn on</button>
+    <button class="btn" id="pushDialogNo" style="margin-top:8px">Not now</button>
+    <p class="sub small">You can change this later in Settings (⚙︎).</p>
+  </div>
 </div>
 
 <script type="module" src="js/main.js"></script>
