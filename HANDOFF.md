@@ -10,6 +10,7 @@ A long-distance gift for Levente's partner: a phone "hologram". A phone lies fla
 - **Internet holo videos are part of the MVP.** The user picks the video type (no auto-detection): *My recording*, *Holo · 1 view* or *Holo · 4 views*. Holo-ready videos keep the brightness cut (compressed "black" is often dark grey and would glow) but skip the face oval. For 4-view pyramid videos, one view is cropped out and shown on the single pane.
 - **No build step.** Plain ES modules loaded by the browser; tests use Node's built-in runner, no dependencies.
 - **Inbox on Supabase, two members only.** Clips go to a private Storage bucket, messages to a Postgres table; the open page gets new ones via Realtime and catches up with a query on open (subscribe first, then fetch, de-duplicated). Sign-in is by emailed magic link with sign-ups disabled; RLS restricts everything to users in a `members` allow-list. The page and its publishable key are public by design.
+- **Hosting stays on GitHub Pages (2026-11-12).** Checked against a future UI upgrade (Valet's stack: React, Tailwind, Radix, etc.): all of it builds to static files. Vercel would only replace page hosting, not Supabase (no Realtime or Auth), so there is no reason to move. A UI upgrade means adding a build step (e.g. Vite) and publishing `dist/` from the workflow.
 - **Learning mode paused (2026-11-09):** the user switched to shipping mode; the inbox design below was made by Claude, not reasoned through by the user.
 
 ## Repository
@@ -48,10 +49,22 @@ package.json          `npm test`, `npm run serve` (no dependencies)
 - Processing runs on a 540px canvas every frame, then a brightness boost.
 - Layouts: single pane (CD case) and 4-sided pyramid. Controls for rotate, mirror, size and position. Settings are saved in localStorage.
 - **Running locally:** `npm run serve`, then open http://localhost:8000. Opening `index.html` directly (file://) doesn't work because browsers block modules there.
-- **Inbox:** sign in by email link, then *Send* sends the loaded video (with its video type/view) or the message text to the partner. Messages list shows sent and received, unseen highlighted; tapping one downloads and plays it. supabase-js 2.118.0 is loaded from jsDelivr only when `js/config.js` is filled in.
+- **Inbox:** sign in by email link, then *Send* sends the loaded video (with its video type/view) or the message text to the partner. Messages list shows sent and received, unseen highlighted; tapping one downloads and plays it. supabase-js 2.118.0 is loaded from jsDelivr only when `js/config.js` is filled in. A failed sign-in link (`#error=...` in the URL, e.g. `otp_expired`) is shown under Inbox and stripped from the address (`authErrorFromUrl` in `js/inbox.js`).
+
+## Supabase: live (set up 2026-11-12)
+- Project `lyvdwzokcyathfebfgch`; URL and publishable key are in `js/config.js` (public by design, RLS does the protecting). The secret key (`sb_secret_...`) must never be committed; `.env` is git-ignored for local use.
+- Schema from `supabase/schema.sql` is applied; sign-ups disabled; both users and their `members` rows exist; redirect URL is `https://levente-murgas.github.io/holo/`.
+- Levente is signed in on laptop (Chrome) and phone. The partner has not signed in yet.
+- **Email limits:** Supabase's built-in sender allows only a few emails per hour per project ("email rate limit exceeded"). The user reports custom SMTP is now configured (Authentication → Emails → SMTP Settings), which lifts that.
+- **Magic links are single-use and expire (~1 h);** requesting a new one cancels older ones. Email scanners that pre-open links cause `otp_expired`. If the partner hits this, add 6-digit code sign-in (`{{ .Token }}` in the email template + `verifyOtp({ email, token, type: 'email' })`).
+- **Sign-in without email (admin fallback):** run in a normal Terminal (not Claude Code's `!`, which can't read input), with the secret key:
+  ```
+  read -rs "KEY?Secret key: " && echo && curl -s -X POST "https://lyvdwzokcyathfebfgch.supabase.co/auth/v1/admin/generate_link" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" -d '{"type":"magiclink","email":"<EMAIL>","redirect_to":"https://levente-murgas.github.io/holo/"}' | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("action_link") or d, end="")' | pbcopy; unset KEY
+  ```
+  It copies a one-time sign-in link; open it once in the browser to sign in. Parse the JSON (as above): copying the raw `action_link` keeps `&` instead of `&` and fails with "Verify requires a verification type".
 - **Tests:** `npm test` (Node 24): 17 passing, covering crop geometry, the brightness cut ramp, and inbox helpers (clip paths, merge/de-dup of live vs fetched messages, unseen count, partner lookup, time labels).
 - **Verified so far:** headless Chrome renders all four views of a synthetic 4-view video upright with the grey background cut to black; test pattern and message render; no JS errors.
-- **Limitations:** inbox code not yet run against a real Supabase project (setup pending, see SETUP.md); no push notifications; old clips are never deleted; no depth sensor (web pages can't access Face ID/TrueDepth); not yet tested on a real phone, the real stand or a real internet holo video; the file picker hasn't been tested end to end (headless Chrome couldn't load a picked file).
+- **Limitations:** sign-in verified on two devices, but sending/receiving between two different accounts (live Realtime delivery to the recipient) is not yet tested; no push notifications; old clips are never deleted; no depth sensor (web pages can't access Face ID/TrueDepth); not yet tested on a real phone, the real stand or a real internet holo video; the file picker hasn't been tested end to end (headless Chrome couldn't load a picked file).
 
 ## Target architecture (phone-only, proposed in the original chat)
 - **GitHub Pages:** hosts the page (static, free, public HTTPS URL). Serves any static files but runs no server code, so all processing happens in the phone's browser.
@@ -67,7 +80,7 @@ package.json          `npm test`, `npm run serve` (no dependencies)
 ## Next steps
 1. Open https://levente-murgas.github.io/holo/ on both phones.
 2. Test on both phones with the printed stand: tune defaults (rotation, mirror, key threshold), try a real internet holo video (1-view and 4-view) and confirm which view convention it uses.
-3. Supabase: follow SETUP.md (project, run schema.sql, disable sign-ups, two users + members rows, redirect URLs, fill js/config.js), push, then test sending between two phones (or to yourself).
+3. Inbox testing: send a text and a clip from the laptop, reload on the phone and play the sent clip (checks upload, RLS and playback across devices). Live delivery can only be tested once the partner signs in; delete test rows in Table Editor → `messages` beforehand if you don't want them in the partner's inbox.
 4. Inbox follow-ups once it works: clip clean-up (storage is 1 GB), maybe notifications (web push needs the PWA from step 5).
 5. Optional: make it a PWA (add to home screen, full-screen, keep the screen awake).
 6. Later: live holo calls with WebRTC, using Supabase Realtime for signaling and Cloudflare TURN.
