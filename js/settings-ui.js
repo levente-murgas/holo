@@ -1,6 +1,9 @@
 // Settings page (gear in the panel header) and the one-time "Turn on notifications?" dialog.
 
 import { getPushStatus, enablePush, disablePush, resyncPush, forgetDevice, shouldAskNow, markAsked } from './push.js';
+import { S, save } from './settings.js';
+import { askOrientationPermission } from './surprise.js';
+import { tryLatestAsSurprise } from './inbox-ui.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -18,6 +21,8 @@ const signedInMember = () => !!(st && st.user && st.me);
 
 async function renderSettings() {
   const member = signedInMember();
+  $('#surpriseToggle').textContent = S.surprise ? 'On' : 'Off';
+  $('#surpriseToggle').classList.toggle('on', !!S.surprise);
   $('#accountRow').hidden = !(st && st.user);
   if (st && st.user) $('#accountWho').textContent = 'Signed in as ' + (st.me ? st.me.name + ' (' + st.user.email + ')' : st.user.email);
 
@@ -60,6 +65,16 @@ export function initSettings(theInbox) {
 
   $('#openSettings').addEventListener('click', () => { $('#settings').hidden = false; setPushStatus(''); renderSettings(); });
   $('#closeSettings').addEventListener('click', () => { $('#settings').hidden = true; });
+
+  $('#surpriseToggle').addEventListener('click', () => {
+    S.surprise = !S.surprise; save();
+    if (S.surprise) askOrientationPermission(); // ask now, from this tap, rather than at the surprise itself
+    renderSettings();
+  });
+
+  $('#surpriseTry').addEventListener('click', () => {
+    $('#surpriseTryStatus').textContent = signedInMember() ? tryLatestAsSurprise() : 'Sign in under Inbox first.';
+  });
 
   $('#pushOn').addEventListener('click', turnOn);
   $('#pushOff').addEventListener('click', async () => {

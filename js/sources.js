@@ -7,7 +7,7 @@ video.playsInline = true; video.loop = true; video.muted = true; video.preload =
 export const videoState = { ready: false, file: null };   // file: the loaded clip (used for sending)
 
 // Load a picked/recorded file into the video element. onStatus(text) reports progress to the UI.
-export function loadVideoFile(file, { muted, onStatus }) {
+export function loadVideoFile(file, { muted, onStatus, autoplay = true }) {
   try { if (video.src) URL.revokeObjectURL(video.src); } catch (_) { /* ignore */ }
   videoState.ready = false;
   videoState.file = file;
@@ -20,7 +20,7 @@ export function loadVideoFile(file, { muted, onStatus }) {
     onStatus(file.name + ' · ' + video.videoWidth + '×' + video.videoHeight + ' · ' + Math.round(video.duration || 0) + 's');
   };
   video.onerror = () => onStatus('Could not play that file. Try a .mov or .mp4 from the camera.');
-  video.play().catch(() => onStatus('Tap “Play / pause” to start.'));
+  if (autoplay) video.play().catch(() => onStatus('Tap “Play / pause” to start.'));
 }
 
 // Test pattern: asymmetric so rotation and mirroring are obvious.

@@ -53,4 +53,10 @@ input[type=email]{width:100%;background:#151c21;border:1px solid var(--line);bor
 .dialog{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
 .dialog-card{width:100%;max-width:360px;background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:20px 16px 12px}
 .dialog-card h2{font-size:18px;margin:0 0 6px}
+#surprise{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;padding:24px;z-index:15;text-align:center}
+.surprise-card{max-width:340px;width:100%}
+.surprise-card h2{font-size:22px;margin:8px 0 6px}
+.surprise-card .sub{font-size:15px;margin:0 0 20px}
+.surprise-heart{font-size:64px;color:#ff5fa2;text-shadow:0 0 28px #ff3d8b;animation:beat 1.4s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(1)}15%{transform:scale(1.14)}30%{transform:scale(1)}45%{transform:scale(1.08)}}
 .sub.small{font-size:12px;margin:10px 0 0;text-align:center}

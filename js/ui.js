@@ -39,8 +39,8 @@ export function sync() {
 }
 
 let hintTimer = null;
-function showPanel() { panel.classList.remove('hidden'); hint.style.opacity = 0; }
-function hidePanel() {
+export function showPanel() { panel.classList.remove('hidden'); hint.style.opacity = 0; }
+export function hidePanel() {
   panel.classList.add('hidden'); hint.style.opacity = 1;
   clearTimeout(hintTimer); hintTimer = setTimeout(() => { hint.style.opacity = 0; }, 2500);
 }

@@ -1,8 +1,10 @@
 // Inbox panel: sign-in, send button, list of messages. Playing a message switches the page to it.
 
 import { S, save } from './settings.js';
-import { sync } from './ui.js';
-import { videoState, loadVideoFile } from './sources.js';
+import { sync, hidePanel, showPanel } from './ui.js';
+import { video, videoState, loadVideoFile } from './sources.js';
+import { isSurprise } from './surprise-logic.js';
+import { askOrientationPermission, startSurprise } from './surprise.js';
 import { isConfigured, createInbox } from './inbox.js';
 import { timeAgo } from './inbox-logic.js';
 import { isInstalled } from './pwa.js';
@@ -63,7 +65,20 @@ function render() {
   }
 }
 
-async function play(m) {
+// Settings → "Try it": open the newest message (yours included) as a surprise. For testing.
+export function tryLatestAsSurprise() {
+  const list = (st && st.messages) || [];
+  const m = list.find((x) => x.clip_path) || list[0];   // newest clip, else newest message
+  if (!m) return 'No messages yet: send one first.';
+  $('#settings').hidden = true;
+  play(m, { forceSurprise: true });
+  return '';
+}
+
+async function play(m, { forceSurprise = false } = {}) {
+  const surprise = forceSurprise || isSurprise(S.surprise, m, st.user.id);
+  // Must run inside the tap, before any await (iPhone only shows the motion prompt for a tap).
+  const permission = surprise ? askOrientationPermission() : null;
   try {
     setStatus(m.clip_path ? 'Downloading…' : '');
     const blob = await inbox.open(m);
@@ -71,13 +86,28 @@ async function play(m) {
       S.mode = 'video'; S.src = m.src; S.view = m.view; save(); sync();
       const ext = m.clip_path.split('.').pop();
       loadVideoFile(new File([blob], 'clip.' + ext, { type: blob.type || 'video/mp4' }), {
-        muted: !S.sound, onStatus: (t) => { $('#status').textContent = t; },
+        muted: !S.sound, autoplay: !surprise, onStatus: (t) => { $('#status').textContent = t; },
       });
       setStatus('');
     } else {
       S.mode = 'message'; S.msg = m.text || ''; save(); sync();
     }
+    if (surprise) {
+      hidePanel();
+      startSurprise({
+        from: nameOf(m.sender), permission,
+        onReveal: () => { if (blob) playFromStart(); },
+        onCancel: () => { video.pause(); S.mode = 'test'; save(); sync(); showPanel(); },
+      });
+    }
   } catch (e) { setStatus('Could not open: ' + (e.message || e)); }
+}
+
+// Revealing can happen seconds after the last tap, when the browser may refuse sound: fall back to muted.
+function playFromStart() {
+  video.currentTime = 0;
+  video.muted = !S.sound;
+  video.play().catch(() => { video.muted = true; video.play().catch(() => {}); });
 }
 
 export async function initInbox() {

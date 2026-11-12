@@ -7,9 +7,11 @@ import { createStage, drawFrame } from './layout.js';
 import { initUI, panelOpen } from './ui.js';
 import { initInbox, refreshSendButton } from './inbox-ui.js';
 import { initPWA } from './pwa.js';
+import { initSurprise, surpriseActive } from './surprise.js';
 
 initPWA();
 loadSettings();
+initSurprise();
 const canvas = document.getElementById('stage');
 const stage = createStage(canvas);
 const processVideo = createProcessor();
@@ -18,6 +20,7 @@ document.addEventListener('holo:change', refreshSendButton);
 initInbox();
 
 function currentSource(t) {
+  if (surpriseActive()) return null;   // Surprise mode: keep the message hidden until it's revealed
   if (S.mode === 'video') {
     if (!videoState.ready) return null;
     return processVideo(video, {

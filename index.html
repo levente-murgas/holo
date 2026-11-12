@@ -157,12 +157,34 @@
     <div class="sub" id="pushStatus"></div>
   </div>
 
+  <div class="row">
+    <div class="lbl">Surprise mode</div>
+    <div class="sub">Messages you receive open only once the phone is lying face down in the holo stand. Until then Holo shows what to do.</div>
+    <div class="toggles">
+      <button class="chip" id="surpriseToggle">Off</button>
+      <!-- temporary: lets you test with your own messages until it's proven on the stand -->
+      <button class="chip" id="surpriseTry">Try it with my newest clip</button>
+    </div>
+    <div class="sub" id="surpriseTryStatus"></div>
+  </div>
+
   <div class="row" id="accountRow" hidden>
     <div class="lbl">Account</div>
     <div class="sub" id="accountWho"></div>
     <button class="chip" id="signout">Sign out</button>
   </div>
 </section>
+
+<!-- Surprise mode: covers the screen until the phone is face down in the stand -->
+<div id="surprise" hidden>
+  <div class="surprise-card">
+    <div class="surprise-heart">♥</div>
+    <h2 id="surpriseFrom">A surprise ♥</h2>
+    <p id="surpriseHow" class="sub">Put the phone face down in the holo stand to open it.</p>
+    <button class="btn" id="surpriseNow">Show it now</button>
+    <button class="chip" id="surpriseCancel" style="margin-top:10px">Later</button>
+  </div>
+</div>
 
 <!-- Asked once per device, right after the first sign-in -->
 <div id="pushDialog" class="dialog" hidden>
