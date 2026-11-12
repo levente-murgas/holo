@@ -5,12 +5,15 @@ import { createProcessor } from './processing.js';
 import { video, videoState, testPattern, renderMessage } from './sources.js';
 import { createStage, drawFrame } from './layout.js';
 import { initUI, panelOpen } from './ui.js';
+import { initInbox, refreshSendButton } from './inbox-ui.js';
 
 loadSettings();
 const canvas = document.getElementById('stage');
 const stage = createStage(canvas);
 const processVideo = createProcessor();
 initUI(canvas);
+document.addEventListener('holo:change', refreshSendButton);
+initInbox();
 
 function currentSource(t) {
   if (S.mode === 'video') {

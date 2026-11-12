@@ -35,6 +35,7 @@ export function sync() {
   $('#msg').value = S.msg;
   $$('.only-video-inline').forEach((e) => { e.style.display = S.mode === 'video' ? '' : 'none'; });
   $('#play').style.display = S.mode === 'video' ? '' : 'none';
+  document.dispatchEvent(new Event('holo:change'));
 }
 
 let hintTimer = null;
@@ -62,7 +63,7 @@ export function initUI(stageCanvas) {
   }));
 
   $('#rot').addEventListener('click', () => { S.rot = (S.rot + 90) % 360; save(); sync(); });
-  $('#msg').addEventListener('input', (e) => { S.msg = e.target.value; save(); });
+  $('#msg').addEventListener('input', (e) => { S.msg = e.target.value; save(); document.dispatchEvent(new Event('holo:change')); });
   $('#play').addEventListener('click', () => {
     if (!videoState.ready) return;
     if (video.paused) video.play().catch(() => {}); else video.pause();

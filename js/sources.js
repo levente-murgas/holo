@@ -4,12 +4,14 @@ export const video = document.createElement('video');
 video.setAttribute('playsinline', '');
 video.playsInline = true; video.loop = true; video.muted = true; video.preload = 'auto';
 
-export const videoState = { ready: false };
+export const videoState = { ready: false, file: null };   // file: the loaded clip (used for sending)
 
 // Load a picked/recorded file into the video element. onStatus(text) reports progress to the UI.
 export function loadVideoFile(file, { muted, onStatus }) {
   try { if (video.src) URL.revokeObjectURL(video.src); } catch (_) { /* ignore */ }
   videoState.ready = false;
+  videoState.file = file;
+  document.dispatchEvent(new Event('holo:change'));
   onStatus('Loading ' + file.name + '…');
   video.src = URL.createObjectURL(file);
   video.muted = muted;

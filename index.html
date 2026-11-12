@@ -52,6 +52,21 @@
     <input id="msg" type="text" maxlength="60" placeholder="Your message">
   </div>
 
+  <div class="row" id="inbox">
+    <div class="lbl">Inbox <b id="inboxBadge"></b></div>
+    <div id="authBox">
+      <input id="email" type="email" autocomplete="email" placeholder="Your email">
+      <button class="btn" id="signin" style="margin-top:8px">Email me a sign-in link</button>
+    </div>
+    <div id="inboxBox" hidden>
+      <div class="sub" id="who"></div>
+      <button class="btn primary" id="send" disabled>Send</button>
+      <ul id="msgs"></ul>
+      <button class="chip" id="signout">Sign out</button>
+    </div>
+    <div class="sub" id="inboxStatus"></div>
+  </div>
+
   <div class="row">
     <div class="lbl">Stand type</div>
     <div class="seg" data-k="layout">
@@ -104,7 +119,7 @@
       <li><b>Filming:</b> front camera, dark wall or room behind you, a lamp or a phone torch lighting your face from the front. Wear something light-coloured, because dark clothes disappear.</li>
       <li><b>Background cut:</b> raise it until the background is fully black; lower it if your face starts losing pieces. Shrink the face oval to crop away anything that's left.</li>
       <li>Black is invisible in the reflection, so anything that isn't pure black will glow.</li>
-      <li>Sending: send her the raw video on WhatsApp. She opens this page, taps Video and picks it, and her phone does the processing.</li>
+      <li><b>Sending:</b> sign in under Inbox, load a video (or write a message), then tap Send. Clips are sent raw and processed on the receiving phone, using the video type you picked.</li>
     </ul>
   </details>
 </div>

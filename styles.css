@@ -32,3 +32,15 @@ summary{color:#e6edf1;font-size:14px;cursor:pointer}
 details li{margin:4px 0}
 #status{font-size:12px;color:#8fa0aa;margin-top:6px;min-height:16px}
 #hint{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);color:#3d4a52;font-size:12px;pointer-events:none;transition:opacity 1.2s;opacity:0}
+input[type=email]{width:100%;background:#151c21;border:1px solid var(--line);border-radius:10px;color:#fff;padding:10px 12px;font:inherit;-webkit-user-select:text;user-select:text}
+#inbox .sub{margin:6px 0}
+#send:disabled{opacity:.45}
+#msgs{list-style:none;margin:10px 0;padding:0;max-height:240px;overflow-y:auto}
+#msgs li{margin:0 0 6px}
+#msgs li.empty{color:#8fa0aa;font-size:13px}
+.msg{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#151c21;color:#a9b8c1;border-radius:10px;padding:8px 12px;font:inherit}
+.msg.unseen{border-color:var(--acc);color:#e6edf1}
+.msg-head{display:block;font-size:12px;color:#8fa0aa}
+.msg.unseen .msg-head{color:var(--acc)}
+.msg-body{display:block;font-size:14px}
+[hidden]{display:none!important}

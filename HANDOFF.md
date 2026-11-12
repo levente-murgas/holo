@@ -9,6 +9,8 @@ A long-distance gift for Levente's partner: a phone "hologram". A phone lies fla
 - **Video first, live calls later.** The MVP is recorded clips; live calls come once that works.
 - **Internet holo videos are part of the MVP.** The user picks the video type (no auto-detection): *My recording*, *Holo · 1 view* or *Holo · 4 views*. Holo-ready videos keep the brightness cut (compressed "black" is often dark grey and would glow) but skip the face oval. For 4-view pyramid videos, one view is cropped out and shown on the single pane.
 - **No build step.** Plain ES modules loaded by the browser; tests use Node's built-in runner, no dependencies.
+- **Inbox on Supabase, two members only.** Clips go to a private Storage bucket, messages to a Postgres table; the open page gets new ones via Realtime and catches up with a query on open (subscribe first, then fetch, de-duplicated). Sign-in is by emailed magic link with sign-ups disabled; RLS restricts everything to users in a `members` allow-list. The page and its publishable key are public by design.
+- **Learning mode paused (2026-11-09):** the user switched to shipping mode; the inbox design below was made by Claude, not reasoned through by the user.
 
 ## Repository
 - GitHub: https://github.com/levente-murgas/holo (public), branch `main`.
@@ -30,7 +32,13 @@ js/processing.js      pure maths: cropRect(), cutAlpha(), smoothstep(), ovalMask
 js/sources.js         video element + file loading, test pattern, message card
 js/layout.js          stage canvas, single-pane / pyramid drawing
 js/ui.js              panel, sliders, buttons, file picker, fullscreen
-tests/processing.test.js   node:test tests for cropRect and cutAlpha
+js/config.js          Supabase URL + publishable key (empty = sending off)
+js/inbox.js           Supabase client: sign-in, send, live receive + catch-up, download, mark seen
+js/inbox-logic.js     pure helpers: clipPath, mergeMessages, unseenCount, partnerOf, timeAgo
+js/inbox-ui.js        Inbox panel: sign-in form, Send button, message list, playing a message
+supabase/schema.sql   members, messages, RLS policies, Realtime publication, private 'clips' bucket
+SETUP.md              one-time Supabase setup steps
+tests/*.test.js       node:test tests for crop/cut maths and inbox helpers
 package.json          `npm test`, `npm run serve` (no dependencies)
 .nojekyll             tells GitHub Pages to publish files as-is
 ```
@@ -40,9 +48,10 @@ package.json          `npm test`, `npm run serve` (no dependencies)
 - Processing runs on a 540px canvas every frame, then a brightness boost.
 - Layouts: single pane (CD case) and 4-sided pyramid. Controls for rotate, mirror, size and position. Settings are saved in localStorage.
 - **Running locally:** `npm run serve`, then open http://localhost:8000. Opening `index.html` directly (file://) doesn't work because browsers block modules there.
-- **Tests:** `npm test` (Node 24): 9 passing, covering crop geometry for square/16:9/portrait videos and the brightness cut ramp.
+- **Inbox:** sign in by email link, then *Send* sends the loaded video (with its video type/view) or the message text to the partner. Messages list shows sent and received, unseen highlighted; tapping one downloads and plays it. supabase-js 2.118.0 is loaded from jsDelivr only when `js/config.js` is filled in.
+- **Tests:** `npm test` (Node 24): 17 passing, covering crop geometry, the brightness cut ramp, and inbox helpers (clip paths, merge/de-dup of live vs fetched messages, unseen count, partner lookup, time labels).
 - **Verified so far:** headless Chrome renders all four views of a synthetic 4-view video upright with the grey background cut to black; test pattern and message render; no JS errors.
-- **Limitations:** no sending (clips stay on the device); no depth sensor (web pages can't access Face ID/TrueDepth); not yet tested on a real phone, the real stand or a real internet holo video; the file picker hasn't been tested end to end (headless Chrome couldn't load a picked file).
+- **Limitations:** inbox code not yet run against a real Supabase project (setup pending, see SETUP.md); no push notifications; old clips are never deleted; no depth sensor (web pages can't access Face ID/TrueDepth); not yet tested on a real phone, the real stand or a real internet holo video; the file picker hasn't been tested end to end (headless Chrome couldn't load a picked file).
 
 ## Target architecture (phone-only, proposed in the original chat)
 - **GitHub Pages:** hosts the page (static, free, public HTTPS URL). Serves any static files but runs no server code, so all processing happens in the phone's browser.
@@ -58,8 +67,8 @@ package.json          `npm test`, `npm run serve` (no dependencies)
 ## Next steps
 1. Open https://levente-murgas.github.io/holo/ on both phones.
 2. Test on both phones with the printed stand: tune defaults (rotation, mirror, key threshold), try a real internet holo video (1-view and 4-view) and confirm which view convention it uses.
-3. Supabase: create the project, storage bucket, `messages` table, RLS policies and auth for two users.
-4. Add an inbox to the page: record → upload → notify; the other phone gets a list of received clips and plays them in holo mode.
+3. Supabase: follow SETUP.md (project, run schema.sql, disable sign-ups, two users + members rows, redirect URLs, fill js/config.js), push, then test sending between two phones (or to yourself).
+4. Inbox follow-ups once it works: clip clean-up (storage is 1 GB), maybe notifications (web push needs the PWA from step 5).
 5. Optional: make it a PWA (add to home screen, full-screen, keep the screen awake).
 6. Later: live holo calls with WebRTC, using Supabase Realtime for signaling and Cloudflare TURN.
 
