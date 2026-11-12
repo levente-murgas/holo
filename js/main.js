@@ -8,6 +8,7 @@ import { initUI, panelOpen } from './ui.js';
 import { initInbox, refreshSendButton } from './inbox-ui.js';
 import { initPWA } from './pwa.js';
 import { initSurprise, surpriseActive } from './surprise.js';
+import { initSetup } from './setup.js';
 
 initPWA();
 loadSettings();
@@ -16,6 +17,7 @@ const canvas = document.getElementById('stage');
 const stage = createStage(canvas);
 const processVideo = createProcessor();
 initUI(canvas);
+initSetup();
 document.addEventListener('holo:change', refreshSendButton);
 initInbox();
 

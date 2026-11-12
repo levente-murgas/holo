@@ -166,10 +166,86 @@
     </div>
   </div>
 
+  <div class="row">
+    <div class="lbl">Setup</div>
+    <button class="chip" id="rerunSetup">Run the setup again</button>
+  </div>
+
   <div class="row" id="accountRow" hidden>
     <div class="lbl">Account</div>
     <div class="sub" id="accountWho"></div>
     <button class="chip" id="signout">Sign out</button>
+  </div>
+</section>
+
+<!-- First-time setup: shown once per device (and again from Settings) -->
+<section id="setup" hidden>
+  <div class="setup-card">
+    <div class="setup-top">
+      <div id="setupDots" class="dots"></div>
+      <button class="link" id="setupSkip">Skip setup</button>
+    </div>
+
+    <div class="step" data-step="welcome">
+      <div class="setup-heart">♥</div>
+      <h2>Welcome to Holo</h2>
+      <p class="sub">Your phone becomes a little hologram. You send each other short clips and messages, and they appear floating in the stand. Setting it up takes about three minutes.</p>
+      <button class="btn primary" data-next>Let's start</button>
+    </div>
+
+    <div class="step" data-step="install">
+      <h2>Put Holo on your home screen</h2>
+      <p class="sub" id="setupInstallHow"></p>
+      <button class="btn primary" id="setupInstallBtn" hidden>Install Holo</button>
+      <p class="sub" id="setupInstallThen"></p>
+      <button class="btn" data-next>Continue here instead</button>
+    </div>
+
+    <div class="step" data-step="signin">
+      <h2>Sign in</h2>
+      <p class="sub">Use the email address Holo was set up with. You'll get a code by email; you only do this once on this phone.</p>
+      <input id="setupEmail" type="email" autocomplete="email" placeholder="Your email">
+      <button class="btn" id="setupSendCode" style="margin-top:8px">Email me a code</button>
+      <div id="setupCodeBox" hidden style="margin-top:8px">
+        <input id="setupCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Code from the email">
+        <button class="btn primary" id="setupVerify" style="margin-top:8px">Sign in</button>
+      </div>
+      <p class="sub" id="setupSigninStatus"></p>
+      <button class="link" data-next>Later</button>
+    </div>
+
+    <div class="step" data-step="notify">
+      <h2>Get a buzz when something arrives</h2>
+      <p class="sub">Holo can tell you when a new holo or message comes in, even while it's closed.</p>
+      <button class="btn primary" id="setupPushOn">Turn on notifications</button>
+      <p class="sub" id="setupPushStatus"></p>
+      <button class="link" id="setupPushLater" data-next>Not now</button>
+    </div>
+
+    <div class="step" data-step="stand">
+      <h2>Line up the stand</h2>
+      <p class="sub">Turn the brightness all the way up and lay the phone face down in the stand. In the reflection, the arrow and <b>TOP</b> should point up and <b>HOLO</b> should read normally. If not, take the phone out and tap Rotate or Mirror until it does.</p>
+      <div class="toggles">
+        <button class="chip" id="setupRot">Rotate</button>
+        <button class="chip" id="setupMirror">Mirror</button>
+        <button class="chip" id="setupPeek">Hide this card</button>
+      </div>
+      <button class="btn primary" data-next style="margin-top:12px">It looks right</button>
+    </div>
+
+    <div class="step" data-step="surprise">
+      <h2>Surprise mode</h2>
+      <p class="sub">With Surprise mode on, a message you receive stays hidden until the phone is lying face down in the stand, so you see it as a hologram first. You can change this any time in Settings (⚙︎).</p>
+      <button class="btn primary" id="setupSurpriseOn">Turn on Surprise mode</button>
+      <button class="link" data-next>No thanks</button>
+    </div>
+
+    <div class="step" data-step="done">
+      <div class="setup-heart">♥</div>
+      <h2>All set</h2>
+      <p class="sub">Tap anywhere on the screen to show the controls. New holos arrive under <b>Inbox</b>; notifications, Surprise mode and this setup are in Settings (⚙︎).</p>
+      <button class="btn primary" id="setupFinish">Start Holo</button>
+    </div>
   </div>
 </section>
 

@@ -3,6 +3,7 @@
 import { getPushStatus, enablePush, disablePush, resyncPush, forgetDevice, shouldAskNow, markAsked } from './push.js';
 import { S, save } from './settings.js';
 import { askOrientationPermission } from './surprise.js';
+import { setupActive, openSetup } from './setup.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -55,7 +56,7 @@ export function onInboxState(state) {
     // Just signed in (or the app opened already signed in): keep this device's subscription saved,
     // and ask about notifications once per device.
     resyncPush(inbox);
-    if (shouldAskNow(true)) $('#pushDialog').hidden = false;
+    if (shouldAskNow(true) && !setupActive()) $('#pushDialog').hidden = false;   // the setup asks itself
   }
   seenUser = uid;
   if (!$('#settings').hidden) renderSettings();
@@ -72,6 +73,8 @@ export function initSettings(theInbox) {
     if (S.surprise) askOrientationPermission(); // ask now, from this tap, rather than at the surprise itself
     renderSettings();
   });
+
+  $('#rerunSetup').addEventListener('click', () => { $('#settings').hidden = true; openSetup(); });
 
   $('#surpriseOwnToggle').addEventListener('click', () => {
     S.surpriseOwn = !S.surpriseOwn; save();
