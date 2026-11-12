@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Holo app icon: a glowing cyan heart on black (the same heart the Message mode shows).
+       The heart stays inside the central 80% so the icon also works as a "maskable" icon. -->
+  <defs>
+    <radialGradient id="g" cx="50%" cy="48%" r="50%">
+      <stop offset="0" stop-color="#5ef0ff" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#5ef0ff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+  </defs>
+  <rect width="512" height="512" fill="#000"/>
+  <circle cx="256" cy="250" r="190" fill="url(#g)"/>
+  <path id="h" d="M256 380 C 150 310 112 258 112 205 C 112 165 143 136 180 136 C 214 136 240 156 256 184 C 272 156 298 136 332 136 C 369 136 400 165 400 205 C 400 258 362 310 256 380 Z"
+        fill="none" stroke="#5ef0ff" stroke-width="18" stroke-linejoin="round"/>
+  <use href="#h" filter="url(#blur)"/>
+</svg>

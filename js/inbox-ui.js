@@ -5,6 +5,7 @@ import { sync } from './ui.js';
 import { videoState, loadVideoFile } from './sources.js';
 import { isConfigured, createInbox } from './inbox.js';
 import { timeAgo } from './inbox-logic.js';
+import { isInstalled } from './pwa.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -90,8 +91,19 @@ export async function initInbox() {
 
   $('#signin').addEventListener('click', async () => {
     const email = $('#email').value.trim(); if (!email) return;
-    try { await inbox.signIn(email); setStatus('Check your email for the sign-in link.'); }
-    catch (e) { setStatus('Sign-in failed: ' + (e.message || e)); }
+    try {
+      await inbox.signIn(email);
+      $('#codeBox').hidden = false;
+      setStatus(isInstalled()
+        ? 'Check your email and type the code here (the link would open the browser, not this app).'
+        : 'Check your email: tap the link, or type the code here.');
+    } catch (e) { setStatus('Sign-in failed: ' + (e.message || e)); }
+  });
+  $('#verify').addEventListener('click', async () => {
+    const email = $('#email').value.trim(), code = $('#code').value.replace(/\s/g, '');
+    if (!email || !code) return;
+    try { await inbox.verifyCode(email, code); setStatus(''); $('#code').value = ''; $('#codeBox').hidden = true; }
+    catch (e) { setStatus('Code not accepted: ' + (e.message || e) + '. Use the newest email, within an hour.'); }
   });
   $('#signout').addEventListener('click', () => inbox.signOut());
   $('#send').addEventListener('click', async () => {

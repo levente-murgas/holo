@@ -6,7 +6,9 @@ import { video, videoState, testPattern, renderMessage } from './sources.js';
 import { createStage, drawFrame } from './layout.js';
 import { initUI, panelOpen } from './ui.js';
 import { initInbox, refreshSendButton } from './inbox-ui.js';
+import { initPWA } from './pwa.js';
 
+initPWA();
 loadSettings();
 const canvas = document.getElementById('stage');
 const stage = createStage(canvas);

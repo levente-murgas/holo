@@ -33,6 +33,10 @@ js/processing.js      pure maths: cropRect(), cutAlpha(), smoothstep(), ovalMask
 js/sources.js         video element + file loading, test pattern, message card
 js/layout.js          stage canvas, single-pane / pyramid drawing
 js/ui.js              panel, sliders, buttons, file picker, fullscreen
+js/pwa.js             service worker registration, isInstalled(), screen wake lock
+sw.js                 service worker: network-first for own files, cached copy when offline
+manifest.webmanifest  app name, icons, full-screen display
+icons/                icon.svg (source) + PNGs rendered from it with headless Chrome
 js/config.js          Supabase URL + publishable key (empty = sending off)
 js/inbox.js           Supabase client: sign-in, send, live receive + catch-up, download, mark seen
 js/inbox-logic.js     pure helpers: clipPath, mergeMessages, unseenCount, partnerOf, timeAgo
@@ -56,7 +60,7 @@ package.json          `npm test`, `npm run serve` (no dependencies)
 - Schema from `supabase/schema.sql` is applied; sign-ups disabled; both users and their `members` rows exist; redirect URL is `https://levente-murgas.github.io/holo/`.
 - Levente is signed in on laptop (Chrome) and phone. The partner has not signed in yet.
 - **Email limits:** Supabase's built-in sender allows only a few emails per hour per project ("email rate limit exceeded"). The user reports custom SMTP is now configured (Authentication → Emails → SMTP Settings), which lifts that.
-- **Magic links are single-use and expire (~1 h);** requesting a new one cancels older ones. Email scanners that pre-open links cause `otp_expired`. If the partner hits this, add 6-digit code sign-in (`{{ .Token }}` in the email template + `verifyOtp({ email, token, type: 'email' })`).
+- **Magic links are single-use and expire (~1 h);** requesting a new one cancels older ones. Email scanners that pre-open links cause `otp_expired`. Code sign-in is built (`verifyCode` → `verifyOtp({ email, token, type: 'email' })`; the code box appears after requesting a link) and avoids both scanners and the iPhone app/Safari storage split, but it needs `{{ .Token }}` in the Magic Link email template (SETUP.md step 9).
 - **Sign-in without email (admin fallback):** run in a normal Terminal (not Claude Code's `!`, which can't read input), with the secret key:
   ```
   read -rs "KEY?Secret key: " && echo && curl -s -X POST "https://lyvdwzokcyathfebfgch.supabase.co/auth/v1/admin/generate_link" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" -d '{"type":"magiclink","email":"<EMAIL>","redirect_to":"https://levente-murgas.github.io/holo/"}' | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("action_link") or d, end="")' | pbcopy; unset KEY
@@ -81,9 +85,10 @@ package.json          `npm test`, `npm run serve` (no dependencies)
 1. Open https://levente-murgas.github.io/holo/ on both phones.
 2. Test on both phones with the printed stand: tune defaults (rotation, mirror, key threshold), try a real internet holo video (1-view and 4-view) and confirm which view convention it uses.
 3. Inbox testing: send a text and a clip from the laptop, reload on the phone and play the sent clip (checks upload, RLS and playback across devices). Live delivery can only be tested once the partner signs in; delete test rows in Table Editor → `messages` beforehand if you don't want them in the partner's inbox.
-4. Inbox follow-ups once it works: clip clean-up (storage is 1 GB), maybe notifications (web push needs the PWA from step 5).
-5. Optional: make it a PWA (add to home screen, full-screen, keep the screen awake).
-6. Later: live holo calls with WebRTC, using Supabase Realtime for signaling and Cloudflare TURN.
+4. PWA (built 2026-11-12, verified in headless Chrome: service worker active, 19 files cached, no installability errors; not yet installed on a real phone): add `{{ .Token }}` to the Magic Link email template (SETUP.md step 9), install on both phones, sign in inside the app with the code, check full screen and that the screen stays awake. When files are added, add them to `SHELL` in `sw.js`; bump `CACHE` only to force-drop old copies.
+5. Push notifications for new messages (web push via the service worker + a Supabase Edge Function / database webhook on `messages` insert). iPhone only allows it in the installed app.
+6. Clip clean-up (storage is 1 GB).
+7. Later: live holo calls with WebRTC, using Supabase Realtime for signaling and Cloudflare TURN.
 
 ## Effort estimates (from the original chat)
 - Inbox and syncing: about 8–15 hours.

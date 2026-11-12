@@ -19,9 +19,15 @@ The page works without this; the Inbox just says "Sending is not set up yet". Th
    - Redirect URLs: add `https://levente-murgas.github.io/holo/` and `http://localhost:8000/`
 7. **Connect the page:** *Project Settings → API Keys* (and *Data API* for the URL). Copy the **Project URL** and the **publishable** key (`sb_publishable_…`, or the legacy `anon` key) into `js/config.js`. Both are safe to commit: the RLS rules from step 2 do the protecting. **Never** put the `secret` / `service_role` key in the page.
 8. Commit and push; the Actions workflow tests and deploys.
+9. **Put a sign-in code in the email** (needed for the installed app): *Authentication → Emails → Templates → Magic Link*. Add a line to the body, e.g.
+   ```html
+   <p>Or type this code in Holo: <strong>{{ .Token }}</strong></p>
+   ```
+   and save. The installed app on iPhone can't use the link (it opens Safari, which keeps its own sign-in), so it signs in with this code instead.
 
 ## Using it
-- Open the page → *Inbox* → enter your email → tap the link in the email **on the same phone**. You stay signed in on that phone after that.
+- **Install it first** (recommended): iPhone: Safari → Share → *Add to Home Screen*. Android: Chrome menu → *Add to Home screen* / *Install app*. Open Holo from the icon.
+- *Inbox* → enter your email → *Email me a sign-in link* → type the **code** from the email into the box that appears (or, in a normal browser tab, tap the link instead). You stay signed in on that phone after that. The installed app and the browser tab are signed in separately.
 - Load a video (and pick its *Video type*) or write a message, then *Send this … to <name>*.
 - The other phone gets it instantly if the page is open; otherwise it's in the Inbox list next time the page opens (new ones are highlighted). Tapping a message plays it with the sender's video type.
 - With only one member added, messages go to yourself: handy for testing alone.
@@ -30,3 +36,4 @@ The page works without this; the Inbox just says "Sending is not set up yet". Th
 - Clips up to 50 MB each; the free tier has 1 GB storage in total. Old clips aren't deleted automatically yet.
 - Supabase's built-in email sender is rate-limited (a few sign-in emails per hour). Fine for two people who sign in once per phone; set up custom SMTP if it gets in the way.
 - No push notifications: the receiver only sees new clips while the page is open or the next time they open it.
+- Sign-in links and codes work once and expire after about an hour; asking for a new one cancels the old one.

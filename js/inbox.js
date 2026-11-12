@@ -85,6 +85,12 @@ export async function createInbox(onChange) {
       });
       if (error) throw error;
     },
+    // Sign in with the code from the same email. Needed in the installed app on iPhone: a tapped
+    // link opens Safari, which has its own storage, so the session would land there, not in the app.
+    async verifyCode(email, token) {
+      const { error } = await sb.auth.verifyOtp({ email, token, type: 'email' });
+      if (error) throw error;
+    },
     async signOut() { await sb.auth.signOut(); },
 
     // Send a clip (file + how to show it) and/or a text to the partner.
