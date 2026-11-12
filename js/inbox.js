@@ -8,12 +8,29 @@ const BUCKET = 'clips';
 
 export const isConfigured = () => !!(SUPABASE_URL && SUPABASE_KEY);
 
+// Sign-in error carried back in the redirect URL (hash or query), or ''.
+function authErrorFromUrl(loc) {
+  for (const part of [loc.hash.slice(1), loc.search.slice(1)]) {
+    const p = new URLSearchParams(part);
+    if (p.get('error') || p.get('error_code')) {
+      const msg = (p.get('error_description') || p.get('error_code') || p.get('error')).replace(/\+/g, ' ');
+      return 'Sign-in link failed: ' + msg + '. Request a new link and open it once.';
+    }
+  }
+  return '';
+}
+
 // onChange(state) is called whenever anything visible changes.
 // state: { user, me, partner, members, messages, unseen, error, notMember }
 export async function createInbox(onChange) {
+  // A failed sign-in link (expired, already used, wrong redirect) comes back as
+  // #error=...&error_description=... ; supabase-js ignores it silently, so show it.
+  const linkError = authErrorFromUrl(location);
+  if (linkError) history.replaceState(null, '', location.pathname);
+
   const { createClient } = await import(SUPABASE_JS);
   const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
-  const state = { user: null, me: null, partner: null, members: [], messages: [], unseen: 0, error: '', notMember: false };
+  const state = { user: null, me: null, partner: null, members: [], messages: [], unseen: 0, error: linkError, notMember: false };
   let channel = null;
 
   const emit = () => { state.unseen = unseenCount(state.messages, state.user && state.user.id); onChange({ ...state }); };
