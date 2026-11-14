@@ -6,6 +6,7 @@ import { createCall, remoteVideo } from './call.js';
 import { formatDuration } from './call-logic.js';
 import { watchFaceDown, askOrientationPermission } from './orientation.js';
 import { hidePanel } from './ui.js';
+import { setBusyCheck } from './pwa.js';
 import { S } from './settings.js';
 
 const $ = (s) => document.querySelector(s);
@@ -67,8 +68,8 @@ function onChange(view) {
   if (v.phase === 'incoming' && was !== 'incoming') ring(true);
   if (v.phase !== 'incoming') ring(false);
   // Watch the orientation for the whole call (permission was asked in the dial/answer tap).
-  if (v.phase !== 'idle' && v.phase !== 'ended' && !watcher) watcher = watchFaceDown((down) => call && call.setInStand(down));
-  if ((v.phase === 'idle' || v.phase === 'ended') && watcher) { watcher.stop(); watcher = null; }
+  if (v.phase !== 'idle' && v.phase !== 'ended' && !watcher) restartWatcher();
+  if ((v.phase === 'idle' || v.phase === 'ended') && watcher) { watcher.stop(); watcher = null; $('#callMotion').hidden = true; }
   clearInterval(tick);
   if (v.phase === 'active') tick = setInterval(render, 1000);
   render();
@@ -78,13 +79,14 @@ function onChange(view) {
 // browsers keep sound off until then) plus vibration where supported (Android).
 function ring(on) {
   if (!on) {
-    if (ringer) { clearInterval(ringer.timer); ringer.ctx.close().catch(() => {}); ringer = null; }
+    if (ringer) { clearInterval(ringer.timer); ringer = null; }
     if (navigator.vibrate) navigator.vibrate(0);
     return;
   }
   if (ringer) return;
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    unlockAudio();
+    const ctx = audioCtx;
     const beep = () => {
       [0, 0.25].forEach((t, i) => {
         const o = ctx.createOscillator(), g = ctx.createGain();
@@ -101,8 +103,33 @@ function ring(on) {
 
 function showError(e) {
   $('#call').hidden = false;
-  $('#callStatus').textContent = 'Could not start the call: ' + (e.message || e) + '. Allow camera and microphone for Holo.';
-  setTimeout(() => { if (!v || v.phase === 'idle') $('#call').hidden = true; }, 4000);
+  const denied = e && e.name === 'NotAllowedError';
+  $('#callStatus').textContent = denied
+    ? 'Holo is not allowed to use the camera or microphone. Allow them for Holo (iPhone: Settings → Apps → Safari → Camera / Microphone), then try again.'
+    : 'Could not start the call: ' + ((e && e.message) || e);
+  setTimeout(() => { if (!v || v.phase === 'idle') $('#call').hidden = true; }, 6000);
+}
+
+// After the camera prompt: ask for motion access. iPhone only allows that from a fresh tap, so if
+// the automatic request is refused, show a button for it (the call works without; stand detection doesn't).
+async function askMotion() {
+  const r = await askOrientationPermission();
+  $('#callMotion').hidden = r === 'granted';
+  restartWatcher();
+}
+function restartWatcher() {
+  if (watcher) { watcher.stop(); watcher = null; }
+  if (v && v.phase !== 'idle' && v.phase !== 'ended') watcher = watchFaceDown((down) => call && call.setInStand(down));
+}
+
+// Browsers keep sound off until the page has been tapped. Make the ringtone's audio context on the
+// first tap anywhere, so an incoming call can ring out loud later while Holo is open.
+let audioCtx = null;
+function unlockAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (_) { /* no audio */ }
 }
 
 let lastSt = null, lastInbox = null, engineKey = '';
@@ -123,18 +150,27 @@ export function callInboxState(st, inbox) {
 export const refreshCall = () => callInboxState(lastSt, lastInbox);
 
 export function initCallUI() {
+  setBusyCheck(() => !!(v && v.phase !== 'idle' && v.phase !== 'ended'));
+  document.addEventListener('pointerdown', unlockAudio, { once: true, capture: true });
   $('#callRemoteBox').prepend(remoteVideo);
   remoteVideo.id = 'callRemote';
 
+  // Camera/microphone first: on iPhone a second permission prompt at the same moment (motion access)
+  // makes the camera request fail with NotAllowedError. Motion is asked afterwards.
   $('#callBtn').addEventListener('click', () => {
     if (!call) return;
-    askOrientationPermission();
-    call.dial().catch(showError);
+    unlockAudio();
+    call.dial().then(askMotion, showError);
   });
   $('#callAccept').addEventListener('click', () => {
-    askOrientationPermission();
+    unlockAudio();
     remoteVideo.play().catch(() => {});     // unlock playback with sound inside this tap
-    call.answer().catch(showError);
+    call.answer().then(askMotion, showError);
+  });
+  $('#callMotion').addEventListener('click', async () => {
+    const r = await askOrientationPermission();
+    $('#callMotion').hidden = r === 'granted';
+    restartWatcher();
   });
   $('#callHang').addEventListener('click', () => call && call.hangup());
   $('#callMute').addEventListener('click', () => call && call.setMuted(!v.muted));

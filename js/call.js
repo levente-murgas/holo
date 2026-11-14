@@ -172,7 +172,7 @@ export function createCall({ inbox, me, partner, onChange }) {
       ring();
       ringRepeat = setInterval(ring, RING_REPEAT_MS);
       ringTimer = setTimeout(() => { send({ type: 'hangup', callId: s.callId, to: undefined }); dispatch({ type: 'timeout' }); }, RING_TIMEOUT_MS);
-      inbox.notify({ action: 'call' }).catch(() => {});   // wakes a phone where Holo is closed
+      inbox.notify({ action: 'call', self: selfCall }).catch(() => {});   // wakes a phone where Holo is closed
     },
     async answer() {
       if (s.phase !== 'incoming') return;

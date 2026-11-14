@@ -16,11 +16,30 @@ export async function promptInstall() {
   return outcome === 'accepted';
 }
 
+// Something that must not be interrupted by an update reload (a call in progress).
+let busy = () => false;
+export function setBusyCheck(fn) { busy = fn; }
+
 export function initPWA() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => { /* page still works without it */ });
+    navigator.serviceWorker.register('sw.js').then(watchForUpdates).catch(() => { /* page still works without it */ });
   }
   keepAwake();
+}
+
+// The installed app is often resumed from memory instead of reloaded, so it would keep running an
+// old version. Each deploy changes sw.js (the build id), so: when Holo comes to the front, ask the
+// browser to check sw.js; when a new version takes over, reload once (later, if a call is on).
+function watchForUpdates(reg) {
+  const hadController = !!navigator.serviceWorker.controller;
+  let pending = false;
+  const reloadIfFree = () => { if (!busy()) location.reload(); else pending = true; };
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) reloadIfFree(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    if (pending) reloadIfFree();
+    reg.update().catch(() => {});
+  });
 }
 
 // The phone is a display under the stand, so it must not dim or lock. The browser drops the

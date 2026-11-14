@@ -2,7 +2,7 @@
 // Called by the page (signed-in user) right after it saves a message:
 //   { action: "message", message_id }  -> notify the recipient of that message (caller must be its sender)
 //   { action: "test" }                 -> notify the caller's own devices
-//   { action: "call" }                 -> "<name> is calling" to the other member's devices
+//   { action: "call", self? }          -> "<name> is calling" to the other member's devices (self: to my own)
 //   { action: "key" }                  -> return the public VAPID key the page needs to subscribe
 // Secrets (supabase secrets set): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT (mailto:you@...).
 // Deployed with verify_jwt = false (see config.toml); withSupabase({ auth: 'user' }) checks the JWT instead.
@@ -43,7 +43,7 @@ function messageText(sender: string, m: { clip_path: string | null; text: string
 export default {
   fetch: withSupabase({ auth: "user" }, async (req, ctx) => {
     const me = ctx.userClaims!.id;
-    const { action, message_id } = await req.json().catch(() => ({}));
+    const { action, message_id, self } = await req.json().catch(() => ({}));
 
     if (action === "key") return Response.json({ key: VAPID.publicKey });
     if (!VAPID.publicKey || !VAPID.privateKey || !VAPID.subject) {
@@ -67,8 +67,11 @@ export default {
       const { data: members } = await ctx.supabase.from("members").select("user_id, name");
       const me_ = members?.find((m: { user_id: string }) => m.user_id === me);
       const other = members?.find((m: { user_id: string }) => m.user_id !== me);
-      if (!me_ || !other) return Response.json({ error: "no one to call" }, { status: 400 });
-      to = other.user_id;
+      if (!me_) return Response.json({ error: "not a member" }, { status: 403 });
+      // self: "Test calls between my own devices" rings the caller's own other devices.
+      const target = self ? me : other?.user_id;
+      if (!target) return Response.json({ error: "no one to call" }, { status: 400 });
+      to = target;
       payload = { title: me_.name + " is calling", body: "📞 Open Holo to answer", tag: "holo-call" };
     } else {
       return Response.json({ error: "unknown action" }, { status: 400 });

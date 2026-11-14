@@ -3,7 +3,10 @@
 // falling back to the last cached copy when there is no connection. Supabase and CDN
 // requests are left alone. It also shows push notifications (sent by supabase/functions/notify).
 
-const CACHE = 'holo-v1';
+// __BUILD__ is replaced with the commit id when deploying (.github/workflows/deploy.yml), so every
+// deploy changes this file and phones pick up the new version (js/pwa.js reloads once it takes over).
+const BUILD = '__BUILD__';
+const CACHE = 'holo-' + BUILD;
 const SHELL = [
   './', 'index.html', 'styles.css', 'manifest.webmanifest',
   'js/main.js', 'js/settings.js', 'js/processing.js', 'js/sources.js', 'js/layout.js', 'js/ui.js',
@@ -30,7 +33,8 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   e.respondWith((async () => {
     try {
-      const res = await fetch(req);
+      // no-cache: revalidate with GitHub Pages (cheap 304) instead of trusting its 10-minute HTTP cache
+      const res = await fetch(req, { cache: 'no-cache' });
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
       return res;
     } catch (err) {
