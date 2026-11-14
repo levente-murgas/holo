@@ -2,7 +2,9 @@
 // Called by the page (signed-in user) right after it saves a message:
 //   { action: "message", message_id }  -> notify the recipient of that message (caller must be its sender)
 //   { action: "test" }                 -> notify the caller's own devices
-//   { action: "call", self? }          -> "<name> is calling" to the other member's devices (self: to my own)
+//   { action: "call", self?, callId?, except? }
+//                                      -> "<name> is calling" to the other member's devices (self: to my own,
+//                                         minus the `except` endpoint = the device that is calling)
 //   { action: "key" }                  -> return the public VAPID key the page needs to subscribe
 // Secrets (supabase secrets set): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT (mailto:you@...).
 // Deployed with verify_jwt = false (see config.toml); withSupabase({ auth: 'user' }) checks the JWT instead.
@@ -43,7 +45,7 @@ function messageText(sender: string, m: { clip_path: string | null; text: string
 export default {
   fetch: withSupabase({ auth: "user" }, async (req, ctx) => {
     const me = ctx.userClaims!.id;
-    const { action, message_id, self } = await req.json().catch(() => ({}));
+    const { action, message_id, self, callId, except } = await req.json().catch(() => ({}));
 
     if (action === "key") return Response.json({ key: VAPID.publicKey });
     if (!VAPID.publicKey || !VAPID.privateKey || !VAPID.subject) {
@@ -72,7 +74,10 @@ export default {
       const target = self ? me : other?.user_id;
       if (!target) return Response.json({ error: "no one to call" }, { status: 400 });
       to = target;
-      payload = { title: me_.name + " is calling", body: "📞 Open Holo to answer", tag: "holo-call" };
+      // A tag per call: iPhone replaces a notification with the same tag without any sound or banner,
+      // so a second call while the first one's notification is still listed would arrive silently.
+      const id = typeof callId === "string" ? callId.replace(/[^\w-]/g, "").slice(0, 64) : "";
+      payload = { title: me_.name + " is calling", body: "📞 Open Holo to answer", tag: "holo-call-" + (id || Date.now()) };
     } else {
       return Response.json({ error: "unknown action" }, { status: 400 });
     }
@@ -82,9 +87,10 @@ export default {
       .select("endpoint, p256dh, auth").eq("user_id", to);
     if (error) return Response.json({ error: error.message }, { status: 500 });
 
+    const targets = (subs ?? []).filter((s: Sub) => !(action === "call" && except && s.endpoint === except));
     let sent = 0;
     const gone: string[] = [];
-    await Promise.all((subs ?? []).map(async (s: Sub) => {
+    await Promise.all(targets.map(async (s: Sub) => {
       try {
         const status = await push(s, payload);
         if (status === 404 || status === 410) gone.push(s.endpoint); // device unsubscribed or app removed
@@ -96,6 +102,6 @@ export default {
     }));
     if (gone.length) await ctx.supabaseAdmin.from("push_subscriptions").delete().in("endpoint", gone);
 
-    return Response.json({ devices: subs?.length ?? 0, sent, removed: gone.length });
+    return Response.json({ devices: targets.length, sent, removed: gone.length });
   }),
 };

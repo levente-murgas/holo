@@ -51,13 +51,21 @@ self.addEventListener('fetch', (e) => {
 self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (_) { d = { body: e.data && e.data.text() }; }
-  e.waitUntil(self.registration.showNotification(d.title || 'Holo', {
-    body: d.body || 'Something new arrived ♥',
-    tag: d.tag || 'holo',
-    icon: 'icons/icon-192.png',
-    badge: 'icons/icon-192.png',
-    data: { url: self.registration.scope },
-  }));
+  const tag = d.tag || 'holo';
+  e.waitUntil((async () => {
+    // Each call has its own tag (so it rings even if an older one is still listed); clear the old ones.
+    if (tag.startsWith('holo-call')) {
+      const old = await self.registration.getNotifications().catch(() => []);
+      old.filter((n) => n.tag.startsWith('holo-call')).forEach((n) => n.close());
+    }
+    await self.registration.showNotification(d.title || 'Holo', {
+      body: d.body || 'Something new arrived ♥',
+      tag,
+      icon: 'icons/icon-192.png',
+      badge: 'icons/icon-192.png',
+      data: { url: self.registration.scope },
+    });
+  })());
 });
 
 // Tapping the notification brings Holo to the front (or opens it); the inbox catches up on open.

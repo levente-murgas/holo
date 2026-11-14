@@ -4,6 +4,7 @@
 // video (its camera would only see the inside of the stand) and shows the other person as a hologram.
 
 import { callReducer, replyTo, IDLE, RING_TIMEOUT_MS, RING_REPEAT_MS } from './call-logic.js';
+import { pushEndpoint } from './push.js';
 
 export const remoteVideo = document.createElement('video');
 remoteVideo.playsInline = true; remoteVideo.autoplay = true; remoteVideo.setAttribute('playsinline', '');
@@ -172,7 +173,12 @@ export function createCall({ inbox, me, partner, onChange }) {
       ring();
       ringRepeat = setInterval(ring, RING_REPEAT_MS);
       ringTimer = setTimeout(() => { send({ type: 'hangup', callId: s.callId, to: undefined }); dispatch({ type: 'timeout' }); }, RING_TIMEOUT_MS);
-      inbox.notify({ action: 'call', self: selfCall }).catch(() => {});   // wakes a phone where Holo is closed
+      // Wakes a phone where Holo is closed. callId gives each call its own notification (iPhone
+      // replaces one with the same tag silently). In a self-test, skip the device that is calling.
+      const callId = s.callId;
+      (selfCall ? pushEndpoint() : Promise.resolve(null))
+        .then((except) => inbox.notify({ action: 'call', self: selfCall, callId, except }))
+        .catch(() => {});
     },
     async answer() {
       if (s.phase !== 'incoming') return;

@@ -15,6 +15,12 @@ async function currentSubscription() {
   return reg.pushManager.getSubscription();
 }
 
+// This device's push address, so a self-test call can skip the phone that is doing the calling.
+export async function pushEndpoint() {
+  const sub = await currentSubscription().catch(() => null);
+  return sub ? sub.endpoint : null;
+}
+
 export async function getPushStatus() {
   return pushStatus({ supported: pushSupported(), permission: permission(), subscribed: !!(await currentSubscription()) });
 }
