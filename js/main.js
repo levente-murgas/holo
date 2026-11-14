@@ -9,6 +9,7 @@ import { initInbox, refreshSendButton } from './inbox-ui.js';
 import { initPWA } from './pwa.js';
 import { initSurprise, surpriseActive } from './surprise.js';
 import { initSetup } from './setup.js';
+import { initCallUI, callHologram } from './call-ui.js';
 
 initPWA();
 loadSettings();
@@ -18,10 +19,18 @@ const stage = createStage(canvas);
 const processVideo = createProcessor();
 initUI(canvas);
 initSetup();
+initCallUI();
 document.addEventListener('holo:change', refreshSendButton);
 initInbox();
 
 function currentSource(t) {
+  const call = callHologram();          // live call with the phone in the stand: show the other person
+  if (call) {
+    if (call.text) return renderMessage(t, call.text);
+    return processVideo(call.video, {
+      src: 'rec', view: 'bottom', oval: S.oval, gain: S.gain, thr: S.thr, soft: S.soft,
+    });
+  }
   if (surpriseActive()) return null;   // Surprise mode: keep the message hidden until it's revealed
   if (S.mode === 'video') {
     if (!videoState.ready) return null;

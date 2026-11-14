@@ -97,6 +97,18 @@ export async function createInbox(onChange) {
     },
     async signOut() { await sb.auth.signOut(); },
 
+    // ---- live calls (see js/call.js) ----
+    client: sb,
+    // STUN/TURN servers for a call: short-lived Cloudflare credentials from the 'turn' function.
+    async iceServers() {
+      const { data, error } = await sb.functions.invoke('turn', { body: {} });
+      if (error || !data || !data.iceServers) {
+        console.warn('turn failed, using STUN only', error);
+        return [{ urls: ['stun:stun.cloudflare.com:3478'] }];
+      }
+      return data.iceServers;
+    },
+
     // ---- push notifications (see js/push.js and supabase/functions/notify) ----
     async vapidKey() {
       const { data, error } = await sb.functions.invoke('notify', { body: { action: 'key' } });

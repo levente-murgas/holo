@@ -1,0 +1,38 @@
+<!doctype html><meta charset="utf-8"><title>call loopback</title>
+<!-- Manual/CI-less check: two call engines in one page, wired through a fake Realtime channel.
+     Open with Chrome flags --use-fake-device-for-media-stream --use-fake-ui-for-media-stream. -->
+<script type="module">
+import { createCall } from '../../js/call.js';
+const chans = [];
+function fakeClient() {
+  return {
+    realtime: { setAuth: async () => {} },
+    channel() {
+      const c = { handlers: [], on(_t, _f, cb) { this.handlers.push(cb); return this; },
+        subscribe(cb) { cb && cb('SUBSCRIBED'); return this; },
+        send({ payload }) { const p = JSON.parse(JSON.stringify(payload)); for (const o of chans) if (o !== c) setTimeout(() => o.handlers.forEach((h) => h({ payload: p })), 5); } };
+      chans.push(c); return c;
+    },
+    removeChannel() {},
+  };
+}
+const fakeInbox = () => ({ client: fakeClient(), iceServers: async () => [], notify: async () => ({}) });
+const A = { user_id: 'a', name: 'Levente' }, B = { user_id: 'b', name: 'Timi' };
+const log = window.log = [];
+const callA = createCall({ inbox: fakeInbox(), me: A, partner: B, onChange: (v) => log.push('A:' + v.phase + (v.reason ? '(' + v.reason + ')' : '') + (v.remoteInStand ? '[remoteInStand]' : '')) });
+const callB = createCall({ inbox: fakeInbox(), me: B, partner: A, onChange: (v) => { log.push('B:' + v.phase + (v.remoteReady ? '[media]' : '')); if (v.phase === 'incoming' && !window.answered) { window.answered = 1; callB.answer(); } } });
+// Timi's second device: rings too, must stop when the first one answers.
+const callC = createCall({ inbox: fakeInbox(), me: B, partner: A, onChange: (v) => log.push('C:' + v.phase + (v.reason ? '(' + v.reason + ')' : '')) });
+window.run = async () => {
+  await new Promise((r) => setTimeout(r, 100));
+  await callA.dial();
+  await new Promise((r) => setTimeout(r, 4000));
+  const audio = callA.state.localStream.getAudioTracks().length, video = callA.state.localStream.getVideoTracks().length;
+  callB.setInStand(true);
+  await new Promise((r) => setTimeout(r, 300));
+  const videoEnabledB = callB.state.localStream.getVideoTracks()[0].enabled;
+  callA.hangup();
+  await new Promise((r) => setTimeout(r, 300));
+  return { log: [...new Set(log)], audio, video, videoEnabledB };
+};
+</script>

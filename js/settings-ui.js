@@ -4,6 +4,7 @@ import { getPushStatus, enablePush, disablePush, resyncPush, forgetDevice, shoul
 import { S, save } from './settings.js';
 import { askOrientationPermission } from './surprise.js';
 import { setupActive, openSetup } from './setup.js';
+import { refreshCall } from './call-ui.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -25,6 +26,7 @@ async function renderSettings() {
   $('#surpriseToggle').classList.toggle('on', !!S.surprise);
   $('#surpriseOwnToggle').hidden = !S.surprise;
   $('#surpriseOwnToggle').classList.toggle('on', !!S.surpriseOwn);
+  $('#callSelfToggle').classList.toggle('on', !!S.callSelf);
   $('#accountRow').hidden = !(st && st.user);
   if (st && st.user) $('#accountWho').textContent = 'Signed in as ' + (st.me ? st.me.name + ' (' + st.user.email + ')' : st.user.email);
 
@@ -73,6 +75,8 @@ export function initSettings(theInbox) {
     if (S.surprise) askOrientationPermission(); // ask now, from this tap, rather than at the surprise itself
     renderSettings();
   });
+
+  $('#callSelfToggle').addEventListener('click', () => { S.callSelf = !S.callSelf; save(); refreshCall(); renderSettings(); });
 
   $('#rerunSetup').addEventListener('click', () => { $('#settings').hidden = true; openSetup(); });
 

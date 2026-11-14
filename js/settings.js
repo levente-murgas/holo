@@ -12,6 +12,7 @@ export const DEF = {
   view: 'bottom',             // which view of a 4-view video: bottom | top | left | right
   surprise: false,            // Surprise mode: received messages open only once the phone is face down in the stand
   surpriseOwn: false,         // ...and the messages I sent too (handy for testing alone)
+  callSelf: false,            // Call button calls your own other devices instead (testing alone)
 };
 
 // The live settings object. Modules read and write it directly; call save() after a change.

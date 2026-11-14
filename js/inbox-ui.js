@@ -10,6 +10,7 @@ import { timeAgo } from './inbox-logic.js';
 import { isInstalled } from './pwa.js';
 import { initSettings, onInboxState } from './settings-ui.js';
 import { setupInbox, setupInboxState } from './setup.js';
+import { callInboxState } from './call-ui.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -109,7 +110,7 @@ export async function initInbox() {
     return;
   }
   try {
-    inbox = await createInbox((s) => { st = s; render(); onInboxState(s); setupInboxState(s); });
+    inbox = await createInbox((s) => { st = s; render(); onInboxState(s); setupInboxState(s); callInboxState(s, inbox); });
     setupInbox(inbox);
   } catch (e) { setStatus('Could not load Supabase: ' + (e.message || e)); initSettings(null); return; }
   initSettings(inbox);

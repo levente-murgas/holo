@@ -76,6 +76,7 @@
     <div id="inboxBox" hidden>
       <div class="sub" id="who"></div>
       <button class="btn primary" id="send" disabled>Send</button>
+      <button class="btn" id="callBtn" hidden style="margin-top:8px">📞 Call</button>
       <ul id="msgs"></ul>
     </div>
     <div class="sub" id="inboxStatus"></div>
@@ -167,6 +168,12 @@
   </div>
 
   <div class="row">
+    <div class="lbl">Calls</div>
+    <div class="sub">For testing alone: the Call button rings your own other devices (e.g. laptop ↔ phone, both signed in as you) instead of your partner.</div>
+    <button class="chip" id="callSelfToggle">Test calls between my own devices</button>
+  </div>
+
+  <div class="row">
     <div class="lbl">Setup</div>
     <button class="chip" id="rerunSetup">Run the setup again</button>
   </div>
@@ -246,6 +253,22 @@
       <p class="sub">Tap anywhere on the screen to show the controls. New holos arrive under <b>Inbox</b>; notifications, Surprise mode and this setup are in Settings (⚙︎).</p>
       <button class="btn primary" id="setupFinish">Start Holo</button>
     </div>
+  </div>
+</section>
+
+<!-- Live call: shown while a call rings or runs. Fades out (stays rendered) while the phone is in the stand. -->
+<section id="call" hidden>
+  <div id="callRemoteBox"></div>
+  <video id="callSelf" muted playsinline autoplay></video>
+  <div class="call-info">
+    <h2 id="callName"></h2>
+    <p id="callStatus" class="sub"></p>
+    <p id="callHint" class="sub"></p>
+  </div>
+  <div class="call-buttons">
+    <button class="btn primary" id="callAccept" hidden>Answer</button>
+    <button class="btn" id="callMute" hidden>Mute</button>
+    <button class="btn danger" id="callHang">Hang up</button>
   </div>
 </section>
 

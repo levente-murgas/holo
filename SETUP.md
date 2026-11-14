@@ -53,6 +53,21 @@ Notes:
 
 Then on each phone (installed app): sign in → *Turn on* in the dialog (or ⚙︎ Settings → *Turn on notifications*) → *Send a test*.
 
+## Live calls (one time)
+
+1. **Cloudflare TURN key** (the relay for networks that block direct connections, e.g. eduroam): sign up free at https://dash.cloudflare.com → *Realtime* → *TURN Server* → *Create* (name it `holo`). Copy the **Turn Token ID** and the **API Token** (shown once).
+2. From the repo root:
+   ```sh
+   supabase db push --remote --dry-run      # should list only the call_signaling migration
+   supabase db push --remote                # lets only the two members use the private 'holo-call' channel
+   read -rs "TOK?Cloudflare API token: " && echo && supabase secrets set CLOUDFLARE_TURN_API_TOKEN="$TOK"; unset TOK
+   supabase secrets set CLOUDFLARE_TURN_KEY_ID=<turn token id>
+   supabase functions deploy turn --use-api
+   supabase functions deploy notify --use-api   # adds the "… is calling" notification
+   ```
+   Without the Cloudflare secrets, `turn` falls back to STUN only: calls still work on most home networks.
+3. Test alone: ⚙︎ Settings → *Test calls between my own devices* on two devices signed in as you (e.g. laptop + phone), then *📞 Call my other device* on one. Turn it off again before calling your partner.
+
 ## Using it
 - **Install it first** (recommended): iPhone: Safari → Share → *Add to Home Screen*. Android: Chrome menu → *Add to Home screen* / *Install app*. Open Holo from the icon.
 - *Inbox* → enter your email → *Email me a sign-in link* → type the **code** from the email into the box that appears (or, in a normal browser tab, tap the link instead). You stay signed in on that phone after that. The installed app and the browser tab are signed in separately.
@@ -64,4 +79,5 @@ Then on each phone (installed app): sign in → *Turn on* in the dialog (or ⚙�
 - Clips up to 50 MB each; the free tier has 1 GB storage in total. Old clips aren't deleted automatically yet.
 - Supabase's built-in email sender is rate-limited (a few sign-in emails per hour). Fine for two people who sign in once per phone; set up custom SMTP if it gets in the way.
 - Push notifications work only where the browser supports them: on iPhone only in the installed app (iOS 16.4+), on Android in Chrome. A device that never turned them on only sees new clips when Holo is open.
+- Calls: free Cloudflare TURN covers 1,000 GB/month of relayed traffic (a video call is roughly 0.5 GB/hour, and most calls connect directly without the relay).
 - Sign-in links and codes work once and expire after about an hour; asking for a new one cancels the old one.

@@ -9,6 +9,7 @@ const SHELL = [
   'js/main.js', 'js/settings.js', 'js/processing.js', 'js/sources.js', 'js/layout.js', 'js/ui.js',
   'js/config.js', 'js/inbox.js', 'js/inbox-logic.js', 'js/inbox-ui.js', 'js/pwa.js',
   'js/push.js', 'js/push-logic.js', 'js/settings-ui.js', 'js/surprise.js', 'js/surprise-logic.js', 'js/setup.js', 'js/setup-logic.js',
+  'js/orientation.js', 'js/call.js', 'js/call-logic.js', 'js/call-ui.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/icon.svg',
 ];
 
