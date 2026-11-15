@@ -175,6 +175,11 @@
 .scroll::-webkit-scrollbar { display: none; }
 .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior-x: contain; }
 .scroll-x::-webkit-scrollbar { display: none; }
+/* a date wheel's column: no scrollbar, and the rows fade out towards the top and bottom like a drum turning away */
+.wheel { scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent);
+  -webkit-mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent); }
+.wheel::-webkit-scrollbar { display: none; }
 
 .pt-safe { padding-top: max(16px, env(safe-area-inset-top)); }
 .pb-safe { padding-bottom: max(12px, env(safe-area-inset-bottom)); }

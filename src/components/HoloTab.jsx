@@ -16,6 +16,7 @@ import { FONTS, COLORS, STYLE_KEYS, styleOf, daysUntil, countdownLines } from '.
 import { useStore, setSettings } from '../store.js';
 import { toggle, rotate, togglePlay, pickFile, pickMedia, openHoloPage } from '../controllers/stage.js';
 import { send, sendInfo } from '../controllers/inbox.js';
+import { DateWheel } from './DateWheel.jsx';
 import { Button, Chip, Section, Segmented, SliderRow, Input, Note, TabBody, cn } from './ui.jsx';
 
 const ease = [0.23, 1, 0.32, 1];
@@ -421,12 +422,6 @@ function GiphyPage({ kind }) {
   );
 }
 
-// Today as YYYY-MM-DD in local time (the date input's min).
-const today = () => {
-  const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-};
-
 function CountdownPage() {
   const visit = useStore((st) => st.s.visit);
   const footer = useSendFooter();
@@ -436,11 +431,7 @@ function CountdownPage() {
       <PageHeader title="Countdown" />
       <TabBody footer={footer}>
         <Section title="Next visit">
-          <Input
-            type="date" value={visit} min={today()} aria-label="Date of the next visit"
-            onChange={(e) => setSettings({ visit: e.target.value })}
-            className="[color-scheme:dark]"
-          />
+          <DateWheel value={visit} onChange={(v) => setSettings({ visit: v })} />
           <Note>{n === null ? 'The stage counts the days down to it' : n < 0 ? 'That day has passed: pick the next one' : ''}</Note>
         </Section>
         <TextStyle kind="countdown" />

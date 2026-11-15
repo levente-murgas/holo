@@ -185,7 +185,8 @@ export function Note({ children, className }) {
 export function TabBody({ children, footer }) {
   return (
     <>
-      <div className="scroll min-h-0 flex-1 space-y-5 p-4">{children}</div>
+      {/* only up and down: rows that scroll sideways (fonts, colours) do it inside themselves */}
+      <div className="scroll min-h-0 flex-1 space-y-5 overflow-x-hidden p-4">{children}</div>
       {footer && <div className="border-t border-border p-3">{footer}</div>}
     </>
   );
