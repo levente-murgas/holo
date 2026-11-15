@@ -2,10 +2,11 @@
 // Shown once per device (the installed iPhone app counts as its own device: it has separate storage,
 // so after "Add to Home Screen" the setup simply continues in the app). Steps already done are skipped.
 
+import { S } from '../../js/settings.js';
 import { nextStep, platformOf } from '../../js/setup-logic.js';
 import { isInstalled } from '../../js/pwa.js';
 import { getPushStatus, enablePush, markAsked } from '../../js/push.js';
-import { set, getState, setSettings } from '../store.js';
+import { set, getState } from '../store.js';
 import { askOrientationPermission } from './surprise.js';
 import { getInbox } from './inbox.js';
 import { showControls, hideControls } from './stage.js';
@@ -64,9 +65,10 @@ export async function setupPushOn() {
 
 export function setupPushLater() { markAsked(); nextSetup(); }   // and don't ask again with the dialog
 
-export function setupSurpriseOn() {
-  setSettings({ surprise: true });
-  askOrientationPermission();   // from this tap, so iPhone can show its motion prompt
+// Surprise mode is on by default; the step only shows the switch. Continuing with it on asks for motion access
+// from this tap, so iPhone can show its prompt now rather than when the first surprise arrives.
+export function setupSurpriseNext() {
+  if (S.surprise) askOrientationPermission();
   nextSetup();
 }
 

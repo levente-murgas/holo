@@ -7,9 +7,10 @@ import { Heart, Download, Mail, Bell, ScanLine, Gift, RotateCw, FlipHorizontal2,
 import { STEPS } from '../../js/setup-logic.js';
 import { canPromptInstall, promptInstall } from '../../js/pwa.js';
 import { useStore } from '../store.js';
-import { nextSetup, finishSetup, peekSetup, setupPushOn, setupPushLater, setupSurpriseOn, platform } from '../controllers/setup.js';
+import { nextSetup, finishSetup, peekSetup, setupPushOn, setupPushLater, setupSurpriseNext, platform } from '../controllers/setup.js';
 import { rotate, toggle } from '../controllers/stage.js';
-import { Button, Chip, Note, cn } from './ui.jsx';
+import { toggleSurprise } from '../controllers/account.js';
+import { Button, Chip, Note, Row, Switch, cn } from './ui.jsx';
 import { SignIn } from './SignIn.jsx';
 
 const INSTALL_HOW = {
@@ -17,6 +18,18 @@ const INSTALL_HOW = {
   android: 'In Chrome, open the menu (⋮) and tap “Install app” or “Add to Home screen”.',
   desktop: '',
 };
+
+// The same switch as in Settings.
+function SurpriseSwitch() {
+  const on = useStore((x) => !!x.s.surprise);
+  return (
+    <div className="inset mt-5">
+      <Row icon={<Gift />} title="Surprise mode" note="Holos open only once the phone is face down in the stand">
+        <Switch label="Surprise mode" checked={on} onCheckedChange={toggleSurprise} />
+      </Row>
+    </div>
+  );
+}
 
 function Badge({ children, heart }) {
   return (
@@ -85,10 +98,10 @@ function Step({ id }) {
       <>
         <Badge><Gift /></Badge>
         <Title>Surprise mode</Title>
-        <Text>With Surprise mode on, a message you receive stays hidden until the phone is lying face down in the stand, so you see it as a hologram first. You can change this any time in Settings.</Text>
+        <Text>A holo you receive stays hidden until the phone is lying face down in the stand, so you see it as a hologram first. It's on by default; you can change it here or any time in Settings.</Text>
+        <SurpriseSwitch />
         <Actions>
-          <Button block size="lg" variant="primary" onClick={setupSurpriseOn}>Turn on Surprise mode</Button>
-          <Button block variant="ghost" size="sm" onClick={nextSetup}>No thanks</Button>
+          <Button block size="lg" variant="primary" onClick={setupSurpriseNext}>Continue</Button>
         </Actions>
       </>
     );
