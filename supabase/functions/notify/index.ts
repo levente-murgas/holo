@@ -40,8 +40,8 @@ async function push(sub: Sub, payload: object): Promise<number> {
 function messageText(sender: string, m: { clip_path: string | null; text: string | null; src?: string }) {
   if (m.src === "gif") return { title: sender + " sent you a GIF", body: "Tap to see it" };
   if (m.src === "sticker") return { title: sender + " sent you a sticker", body: "Tap to see it" };
-  if (m.clip_path) return { title: sender + " sent you a holo", body: m.text ? "🎬 " + m.text : "🎬 Tap to watch" };
-  return { title: sender + " sent you a message", body: "♥ " + (m.text ?? "") };
+  if (m.clip_path) return { title: sender + " sent you a holo", body: "Tap to watch" };
+  return { title: sender + " sent you a message", body: "Tap to see it" };   // the words stay a surprise until it's opened
 }
 
 export default {

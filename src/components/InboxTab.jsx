@@ -29,7 +29,7 @@ function Message({ m, me }) {
             <span className={cn(unseen && 'font-medium')}>{mine ? 'To ' + nameOf(m.recipient) : nameOf(m.sender)}</span>
           </div>
           <div className="mt-0.5 truncate text-meta text-muted-foreground">
-            {stk ? 'Sticker' : gif ? 'GIF' : video ? 'Holo video' : 'Message'}{m.text ? ' · “' + m.text + '”' : ''}
+            {stk ? 'Sticker' : gif ? 'GIF' : video ? 'Holo video' : 'Message'}{m.text && !unseen ? ' · “' + m.text + '”' : ''}
           </div>
         </div>
         <div className="flex flex-col items-end gap-1.5">

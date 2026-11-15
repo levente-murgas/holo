@@ -161,10 +161,10 @@ function Gallery() {
   return (
     <TabBody>
       <div className="flex flex-wrap items-start justify-center gap-x-3 gap-y-4 px-1 py-2">
-        <Card id="message" label="Message" icon={MessageCircleHeart} tilt="-1.5deg" className="w-[60%]">
+        <Card id="message" label="Message" icon={MessageCircleHeart} tilt="-1.5deg" className="w-[46%]">
           <span className="line-clamp-2 px-4 text-center text-title font-medium" style={{ color: INK }}>{msg || 'Your words'}</span>
         </Card>
-        <Card id="video" label="Video" icon={Film} tilt="2deg" className="w-[34%]">
+        <Card id="video" label="Video" icon={Film} tilt="2deg" className="w-[40%]">
           <Peek>{v.file ? <Play /> : <Upload />}</Peek>
         </Card>
         <Card id="gif" label="GIF" icon={ImagePlay} tilt="-1deg" className="w-[46%]">
