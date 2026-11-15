@@ -1,2 +1,4 @@
 /.vibe-wise
 .env
+node_modules/
+dist/

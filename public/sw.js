@@ -3,21 +3,17 @@
 // falling back to the last cached copy when there is no connection. Supabase and CDN
 // requests are left alone. It also shows push notifications (sent by supabase/functions/notify).
 
-// __BUILD__ is replaced with the commit id when deploying (.github/workflows/deploy.yml), so every
+// __BUILD__ is replaced with the commit id at build time (vite.config.js), so every
 // deploy changes this file and phones pick up the new version (js/pwa.js reloads once it takes over).
 const BUILD = '__BUILD__';
 const CACHE = 'holo-' + BUILD;
-const SHELL = [
-  './', 'index.html', 'styles.css', 'manifest.webmanifest',
-  'js/main.js', 'js/settings.js', 'js/processing.js', 'js/sources.js', 'js/layout.js', 'js/ui.js',
-  'js/config.js', 'js/inbox.js', 'js/inbox-logic.js', 'js/inbox-ui.js', 'js/pwa.js',
-  'js/push.js', 'js/push-logic.js', 'js/settings-ui.js', 'js/surprise.js', 'js/surprise-logic.js', 'js/setup.js', 'js/setup-logic.js',
-  'js/orientation.js', 'js/call.js', 'js/call-logic.js', 'js/call-ui.js',
-  'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/icon.svg',
-];
+// The placeholder is replaced with the built files (vite.config.js): their names change with every build.
+const SHELL = ['__SHELL__'];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // In development (npm run dev) the list is still the placeholder: cache nothing up front.
+  const shell = SHELL.filter((f) => f !== '__SHELL__');
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(shell)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -38,9 +34,9 @@ self.addEventListener('fetch', (e) => {
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
       return res;
     } catch (err) {
-      const hit = await caches.match(req, { ignoreSearch: true });
+      const hit = await caches.match(req, { ignoreSearch: true, ignoreVary: true });   // the built page asks for its files with crossorigin, which some servers answer with Vary: Origin
       if (hit) return hit;
-      if (req.mode === 'navigate') return caches.match('index.html');
+      if (req.mode === 'navigate') return caches.match('index.html', { ignoreSearch: true });
       throw err;
     }
   })());
@@ -59,7 +55,7 @@ self.addEventListener('push', (e) => {
       old.filter((n) => n.tag.startsWith('holo-call')).forEach((n) => n.close());
     }
     await self.registration.showNotification(d.title || 'Holo', {
-      body: d.body || 'Something new arrived ♥',
+      body: d.body || 'Something new arrived',
       tag,
       icon: 'icons/icon-192.png',
       badge: 'icons/icon-192.png',

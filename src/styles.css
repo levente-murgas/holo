@@ -1,0 +1,176 @@
+@import "tailwindcss";
+@import "@fontsource-variable/geist";
+
+/* Holo's look follows Valet (askvalet.dev, MIT): graphite neutrals so the content carries the colour, one brass
+   accent, Geist, and liquid-glass surfaces floating over the black hologram stage. The graphite ramp and status tones
+   come by way of Valet from unslop by Damir Sokolovsky (github.com/heydamir/unslop, CC BY 4.0); the liquid-glass
+   material follows kubai087/glasswork (MIT). Dark only: the stage has to stay black, so everything around it does too. */
+:root {
+  color-scheme: dark;
+  --radius: 0.9rem;
+  --background: #000000;
+  --foreground: #ededed;
+  --card: rgb(20 20 24 / .55);
+  --card-solid: #19191b;
+  --muted: rgb(255 255 255 / .08);
+  --muted-foreground: rgb(235 235 245 / .64);
+  --primary: #d9b56c;               /* brass: the one thing to do, the one thing that's new */
+  --primary-foreground: #1a1508;
+  --heart: #ff5fa2;                 /* kept from the first Holo: the heart is pink */
+  --border: rgb(255 255 255 / .08);
+  --input: rgb(255 255 255 / .12);
+  --ring: #d9b56c;
+  --good: #4cc38a; --warn: #f0a23c; --bad: #e5484d;
+
+  /* the ink at a strength, so a chip or a control reads on any glass */
+  --fill-1: color-mix(in oklab, var(--foreground) 7%, transparent);    /* at rest */
+  --fill-2: color-mix(in oklab, var(--foreground) 12%, transparent);   /* hovered */
+  --fill-3: color-mix(in oklab, var(--foreground) 18%, transparent);   /* pressed, chosen */
+
+  /* liquid glass: a thin tint over a light blur, a rim lit from the top left and a bevel just inside the edge */
+  --glass-blur: blur(14px) saturate(1.6) brightness(.8);
+  --glass-float: blur(24px) saturate(1.6) brightness(.8);
+  --glass-shadow: inset 1px 1px .5px -.5px rgb(255 255 255 / .46), inset -1px -1px .5px -.5px rgb(255 255 255 / .18),
+    inset 0 0 0 .5px rgb(255 255 255 / .06), 0 0 0 .5px rgb(0 0 0 / .28), 0 4px 14px rgb(0 0 0 / .22);
+  --glass-lifted: inset 1px 1px .5px -.5px rgb(255 255 255 / .46), inset -1px -1px .5px -.5px rgb(255 255 255 / .18),
+    inset 0 0 0 .5px rgb(255 255 255 / .06), 0 0 0 .5px rgb(0 0 0 / .4), 0 24px 56px -20px rgb(0 0 0 / .7);
+  --glass-bevel: linear-gradient(rgb(255 255 255 / .11), transparent 7px), linear-gradient(to top, rgb(0 0 0 / .07), transparent 7px),
+    linear-gradient(to right, rgb(255 255 255 / .05), transparent 6px), linear-gradient(to left, rgb(255 255 255 / .03), transparent 6px);
+  --glass-stroke: rgb(255 255 255 / .22);
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-press: 160ms;
+  --dur-pop: 200ms;
+  --dur-move: 280ms;
+}
+
+@theme inline {
+  --font-sans: "Geist Variable", -apple-system, BlinkMacSystemFont, "SF Pro Text", ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-heart: var(--heart);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --color-fill-1: var(--fill-1);
+  --color-fill-2: var(--fill-2);
+  --color-fill-3: var(--fill-3);
+  --default-transition-duration: var(--dur-press);
+  --default-transition-timing-function: var(--ease-out);
+}
+
+/* Corners by role, all from --radius: surfaces 20, controls 12, chips 9, tags 6. Type in eight steps, each with its job. */
+@theme static {
+  --radius-surface: calc(var(--radius) * 1.4);
+  --radius-control: calc(var(--radius) * 0.8);
+  --radius-chip: calc(var(--radius) * 0.6);
+  --radius-tag: calc(var(--radius) * 0.4);
+  --text-caption: 11px;    /* the smallest notes */
+  --text-meta: 12px;       /* when, from whom: the line under a name */
+  --text-body: 13px;       /* a card's words */
+  --text-item: 14px;       /* a row's name, a button */
+  --text-title: 15px;      /* a card's title */
+  --text-metric-s: 20px;   /* a heading in a card */
+  --text-metric-m: 28px;   /* a page's heading */
+  --spacing-icon-sm: 14px;
+  --spacing-icon: 16px;
+  --spacing-icon-lg: 18px;
+}
+
+@layer base {
+  * { @apply border-border; box-sizing: border-box; }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    @apply text-foreground antialiased font-sans;
+    font-size: var(--text-body);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+  }
+  input { -webkit-user-select: text; user-select: text; font: inherit; }
+  button:not(:disabled), [role="button"], summary, label[for], [role="switch"], [role="radio"], [role="slider"] { cursor: pointer; }
+  :disabled, [aria-disabled="true"], [data-disabled] { cursor: not-allowed; }
+  [hidden] { display: none !important; }
+}
+
+#stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: manipulation;
+  transform-origin: 50% 0; transition: transform 520ms var(--ease-drawer); }
+#stage.preview { transform: scale(var(--stage-scale, 1)); }
+#root { position: fixed; inset: 0; pointer-events: none; }
+#root > * { pointer-events: auto; }
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* ── Glass ── */
+/* a card or sheet: the tint, the blur, the bevel and the lit rim */
+.glass {
+  position: relative;
+  background-color: var(--card);
+  background-image: var(--glass-bevel);
+  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+}
+/* what floats over everything (the controls sheet, dialogs): thicker, so the hologram behind doesn't read through */
+.glass-float {
+  background-color: rgb(20 20 24 / .72);
+  background-image: var(--glass-bevel);
+  backdrop-filter: var(--glass-float); -webkit-backdrop-filter: var(--glass-float);
+  box-shadow: var(--glass-lifted);
+}
+/* round glass controls: the dock, round buttons, the hint */
+.glass-round {
+  background-color: rgb(255 255 255 / .08);
+  background-image: var(--glass-bevel);
+  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+}
+/* an inset group inside a glass card: one step of fill, no blur of its own */
+.inset { background: var(--fill-1); border-radius: var(--radius-control); }
+.inset > * + * { border-top: 1px solid var(--border); }
+
+@media (prefers-reduced-transparency: reduce) {
+  :root { --card: rgb(20 20 24); }
+  .glass-float { background-color: rgb(20 20 24); }
+}
+
+/* ── Beam: a slow light running round the edge while a call rings, the one thing that's live (after Valet's border-beam) ── */
+@property --beam-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.beam { position: relative; isolation: isolate; }
+.beam::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: conic-gradient(from var(--beam-angle), transparent 0 70%, color-mix(in oklab, var(--beam, var(--primary)) 40%, transparent) 80%,
+    var(--beam, var(--primary)) 88%, color-mix(in oklab, var(--beam, var(--primary)) 40%, transparent) 94%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: beam-spin 3.2s linear infinite;
+}
+@keyframes beam-spin { to { --beam-angle: 360deg; } }
+
+/* status dots: 6px, beside a name */
+.dot { display: inline-block; width: 6px; height: 6px; border-radius: 999px; flex: none; }
+
+/* a press gives a little */
+.press { transition-property: transform, color, background-color, opacity, box-shadow; transition-duration: var(--dur-press); transition-timing-function: var(--ease-out); }
+.press:active:not(:disabled) { transform: scale(.97); }
+
+
+/* scroll areas keep their momentum on iPhone and hide the bar */
+.scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior: contain; }
+.scroll::-webkit-scrollbar { display: none; }
+
+.pt-safe { padding-top: max(16px, env(safe-area-inset-top)); }
+.pb-safe { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

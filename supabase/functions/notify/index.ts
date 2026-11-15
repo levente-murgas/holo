@@ -37,7 +37,9 @@ async function push(sub: Sub, payload: object): Promise<number> {
   return res.status;
 }
 
-function messageText(sender: string, m: { clip_path: string | null; text: string | null }) {
+function messageText(sender: string, m: { clip_path: string | null; text: string | null; src?: string }) {
+  if (m.src === "gif") return { title: sender + " sent you a GIF", body: "Tap to see it" };
+  if (m.src === "sticker") return { title: sender + " sent you a sticker", body: "Tap to see it" };
   if (m.clip_path) return { title: sender + " sent you a holo", body: m.text ? "🎬 " + m.text : "🎬 Tap to watch" };
   return { title: sender + " sent you a message", body: "♥ " + (m.text ?? "") };
 }
@@ -59,7 +61,7 @@ export default {
     } else if (action === "message") {
       // ctx.supabase is RLS-scoped to the caller, so this only finds messages they can see.
       const { data: m, error } = await ctx.supabase.from("messages")
-        .select("id, sender, recipient, clip_path, text").eq("id", message_id).single();
+        .select("id, sender, recipient, clip_path, text, src").eq("id", message_id).single();
       if (error || !m) return Response.json({ error: "message not found" }, { status: 404 });
       if (m.sender !== me) return Response.json({ error: "not your message" }, { status: 403 });
       const { data: sender } = await ctx.supabase.from("members").select("name").eq("user_id", me).single();

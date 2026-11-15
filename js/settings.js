@@ -3,9 +3,11 @@
 const STORAGE_KEY = 'holo.v1';
 
 export const DEF = {
-  mode: 'test', layout: 'single', rot: 180, mirror: true, sound: false,
+  mode: 'message', layout: 'single', rot: 180, mirror: true, sound: false,
   thr: 0.16, soft: 0.12,      // background cut for "My recording"
   hthr: 0.05, hsoft: 0.06,    // separate background cut for holo videos
+  gthr: 0.06, gsoft: 0.1,     // and for GIFs
+  sthr: 0.02, ssoft: 0.06,    // and for stickers (only to trim a dark fringe: their background is already gone)
   oval: 0.95, gain: 1.4, size: 0.9, pos: 0, gap: 1,
   msg: 'Miss you already',
   src: 'rec',                 // video type: rec | holo1 | holo4
@@ -22,6 +24,7 @@ export function loadSettings() {
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; } catch (e) { /* private mode etc. */ }
   for (const k in DEF) S[k] = (k in saved) ? saved[k] : DEF[k];
+  if (S.mode !== 'video') S.mode = 'message';   // the old Test mode is gone; a GIF isn't kept between visits
   return S;
 }
 
@@ -34,6 +37,10 @@ export function isHolo(s = S) {
 }
 
 // The "Background cut" and "Edge softness" sliders edit thr/soft for recordings and hthr/hsoft for holo videos.
+// GIFs and stickers have their own pairs (gthr/gsoft, sthr/ssoft).
 export function keyFor(k, s = S) {
-  return (isHolo(s) && (k === 'thr' || k === 'soft')) ? 'h' + k : k;
+  if (k !== 'thr' && k !== 'soft') return k;
+  if (s.mode === 'gif') return 'g' + k;
+  if (s.mode === 'sticker') return 's' + k;
+  return isHolo(s) ? 'h' + k : k;
 }

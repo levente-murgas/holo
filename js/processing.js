@@ -65,9 +65,9 @@ export function createProcessor() {
   }
 
   return function process(video, o) {
-    const vw = video.videoWidth, vh = video.videoHeight;
+    const vw = video.videoWidth || video.width, vh = video.videoHeight || video.height;   // a video, or a canvas (stickers)
     if (!vw || !vh) return null;
-    const holo = o.src === 'holo1' || o.src === 'holo4';
+    const holo = o.src === 'holo1' || o.src === 'holo4' || o.src === 'gif' || o.src === 'sticker';   // no face oval
     let w, h;
 
     if (o.src === 'holo4') {
