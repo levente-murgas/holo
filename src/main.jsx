@@ -17,6 +17,19 @@ import { initCall, callHologram } from './controllers/call.js';
 import { App } from './App.jsx';
 
 initPWA();
+
+// iPhone, installed app: the page can come out shorter than the screen (by about the status bar's height), so
+// anything pinned to the bottom stops short with a black band under it. Measure the shortfall and let the
+// controls reach past it (Controls.jsx). Where the page fills the screen this is 0, so it fixes itself.
+function measureViewportGap() {
+  const ios = navigator.standalone === true;
+  const portrait = window.innerHeight > window.innerWidth;
+  const full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+  const gap = ios ? Math.max(0, full - window.innerHeight) : 0;
+  document.documentElement.style.setProperty('--viewport-gap', (gap < 120 ? gap : 0) + 'px');
+}
+measureViewportGap();
+window.addEventListener('resize', measureViewportGap);
 loadSettings();
 if (S.layout !== 'single') S.layout = 'single';   // the pyramid option is gone from the controls
 refreshSettings();

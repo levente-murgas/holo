@@ -1,4 +1,4 @@
-// The controls over the stage: a glass sheet with the chosen tab, above the dock along the bottom edge.
+// The controls over the stage: a glass sheet with the chosen tab, above the dock, which sits down by the home indicator.
 // Nothing at the top: that belongs to the hologram preview (new holos show as the count on the Inbox icon).
 
 import { useCallback, useRef } from 'react';
@@ -23,41 +23,39 @@ const spring = { type: 'spring', stiffness: 420, damping: 38, mass: 0.9 };
 
 function Dock({ tab, unseen }) {
   return (
-    <nav className="glass pb-safe-dock flex w-full justify-center rounded-t-surface px-3 pt-1.5">
-      <div className="flex h-12 w-full max-w-[360px] items-stretch gap-1">
-        {TABS.map(({ id, label, icon: Icon }) => {
-          const on = tab === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => (on && id === 'holo' ? openHoloPage(null) : setTab(id))}   // Hologram again: back to the gallery
-              aria-label={label}
-              aria-current={on ? 'page' : undefined}
-              className={cn(
-                'press relative flex flex-1 items-center justify-center rounded-full',
-                on ? 'text-foreground' : 'text-muted-foreground',
+    <nav className="glass-round flex h-14 w-full items-stretch gap-1 rounded-full p-1.5">
+      {TABS.map(({ id, label, icon: Icon }) => {
+        const on = tab === id;
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => (on && id === 'holo' ? openHoloPage(null) : setTab(id))}   // Hologram again: back to the gallery
+            aria-label={label}
+            aria-current={on ? 'page' : undefined}
+            className={cn(
+              'press relative flex flex-1 items-center justify-center rounded-full',
+              on ? 'text-foreground' : 'text-muted-foreground',
+            )}
+          >
+            {on && (
+              <motion.span
+                layoutId="dock-pill"
+                transition={spring}
+                className="absolute inset-0 rounded-full bg-fill-2 shadow-[inset_0_0_0_.5px_var(--glass-stroke)]"
+              />
+            )}
+            <span className="relative">
+              <Icon className={cn('size-5', on && 'text-primary')} strokeWidth={on ? 2.1 : 1.8} />
+              {id === 'inbox' && unseen > 0 && (
+                <span className="absolute -top-1.5 -right-2.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-caption font-semibold text-primary-foreground tabular">
+                  {unseen}
+                </span>
               )}
-            >
-              {on && (
-                <motion.span
-                  layoutId="dock-pill"
-                  transition={spring}
-                  className="absolute inset-0 rounded-full bg-fill-2 shadow-[inset_0_0_0_.5px_var(--glass-stroke)]"
-                />
-              )}
-              <span className="relative">
-                <Icon className={cn('size-5', on && 'text-primary')} strokeWidth={on ? 2.1 : 1.8} />
-                {id === 'inbox' && unseen > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-caption font-semibold text-primary-foreground tabular">
-                    {unseen}
-                  </span>
-                )}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+            </span>
+          </button>
+        );
+      })}
     </nav>
   );
 }
@@ -96,9 +94,9 @@ export function Controls({ open }) {
           ref={room}
           initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
           transition={spring}
-          className="fixed inset-x-0 bottom-0 mx-auto flex max-w-[560px] flex-col gap-2"
+          className="pb-dock fixed inset-x-0 bottom-[calc(-1*var(--viewport-gap,0px))] mx-auto flex max-w-[560px] flex-col gap-2.5 px-3"
         >
-          <div className={cn('glass-float mx-3 flex flex-col overflow-hidden rounded-surface', gallery ? 'max-h-[min(48dvh,540px)]' : 'h-[min(48dvh,540px)]')}>
+          <div className={cn('glass-float flex flex-col overflow-hidden rounded-surface', gallery ? 'max-h-[min(48dvh,540px)]' : 'h-[min(48dvh,540px)]')}>
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={tab}

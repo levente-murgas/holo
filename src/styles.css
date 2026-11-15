@@ -178,7 +178,7 @@
 
 .pt-safe { padding-top: max(16px, env(safe-area-inset-top)); }
 .pb-safe { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
-.pb-safe-dock { padding-bottom: max(6px, env(safe-area-inset-bottom)); }   /* the dock sits on the bottom edge, over the home indicator */
+.pb-dock { padding-bottom: max(8px, calc(env(safe-area-inset-bottom) - 12px)); }   /* the dock rests just above the home indicator */
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
