@@ -1,5 +1,11 @@
 @import "tailwindcss";
 @import "@fontsource-variable/geist";
+/* the text styles for messages and the countdown (js/textstyle.js); each loads only when it is used */
+@import "@fontsource-variable/playfair-display";
+@import "@fontsource/courier-prime/400.css";
+@import "@fontsource/pacifico/400.css";
+@import "@fontsource/archivo-black/400.css";
+@import "@fontsource/bebas-neue/400.css";
 
 /* Holo's look follows Valet (askvalet.dev, MIT): graphite neutrals so the content carries the colour, one brass
    accent, Geist, and liquid-glass surfaces floating over the black hologram stage. The graphite ramp and status tones
@@ -167,6 +173,8 @@
 /* scroll areas keep their momentum on iPhone and hide the bar */
 .scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior: contain; }
 .scroll::-webkit-scrollbar { display: none; }
+.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior-x: contain; }
+.scroll-x::-webkit-scrollbar { display: none; }
 
 .pt-safe { padding-top: max(16px, env(safe-area-inset-top)); }
 .pb-safe { padding-bottom: max(12px, env(safe-area-inset-bottom)); }

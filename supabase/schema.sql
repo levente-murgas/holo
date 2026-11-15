@@ -28,8 +28,9 @@ create table public.messages (
   recipient  uuid not null references public.members (user_id),
   clip_path  text,                                   -- path in the 'clips' bucket, null for text-only
   text       text check (char_length(text) <= 200),
-  src        text not null default 'rec' check (src in ('rec', 'holo1', 'holo4', 'gif', 'sticker')),
+  src        text not null default 'rec' check (src in ('rec', 'holo1', 'holo4', 'gif', 'sticker', 'countdown')),
   view       text not null default 'bottom' check (view in ('bottom', 'top', 'left', 'right')),
+  style      jsonb check (style is null or octet_length(style::text) <= 200),   -- how the words look: { font, color }
   created_at timestamptz not null default now(),
   seen_at    timestamptz,
   check (clip_path is not null or text is not null)

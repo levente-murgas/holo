@@ -3,6 +3,7 @@
 import { S } from '../../js/settings.js';
 import { video, videoState, gifVideo, gifState, sticker, stickerState } from '../../js/sources.js';
 import { isSurprise } from '../../js/surprise-logic.js';
+import { styleOf, stylePatch, daysUntil } from '../../js/textstyle.js';
 import { isConfigured, createInbox } from '../../js/inbox.js';
 import { isInstalled } from '../../js/pwa.js';
 import { set, getState, setSettings } from '../store.js';
@@ -68,6 +69,10 @@ export function sendInfo(s, st, v, gif, stk) {
   if (s.mode === 'gif') return gif && gif.ready ? { label: 'Send this GIF to ' + to, can: true } : { label: 'Pick a GIF to send', can: false };
   if (s.mode === 'sticker') return stk && stk.ready ? { label: 'Send this sticker to ' + to, can: true } : { label: 'Pick a sticker to send', can: false };
   if (s.mode === 'message') return { label: 'Send this message to ' + to, can: !!s.msg };
+  if (s.mode === 'countdown') {
+    const n = daysUntil(s.visit);
+    return n !== null && n >= 0 ? { label: 'Send this countdown to ' + to, can: true } : { label: 'Pick the date to send', can: false };
+  }
   return { label: 'Send', can: false };
 }
 
@@ -83,9 +88,12 @@ export async function send() {
     } else if (S.mode === 'sticker') {
       setStatus('Uploading…');
       await inbox.send({ file: stickerState.file, src: 'sticker' });
+    } else if (S.mode === 'countdown') {
+      setStatus('');
+      await inbox.send({ text: S.visit, src: 'countdown', style: styleOf(S, 'countdown') });
     } else {
       setStatus('');
-      await inbox.send({ text: S.msg });
+      await inbox.send({ text: S.msg, style: styleOf(S, 'message') });
     }
     setStatus('Sent');
   } catch (e) { setStatus('Send failed: ' + (e.message || e)); }
@@ -115,8 +123,13 @@ export async function play(m) {
       loadClip(new File([blob], 'clip.' + ext, { type: blob.type || 'video/mp4' }), !surprise);
       setStatus('');
     } else {
-      setSettings({ mode: 'message', msg: m.text || '' });
-      set({ holoPage: 'message' });
+      if (m.src === 'countdown') {
+        setSettings({ mode: 'countdown', visit: m.text || '', ...stylePatch('countdown', m.style) });   // shown the way it was sent
+        set({ holoPage: 'countdown' });
+      } else {
+        setSettings({ mode: 'message', msg: m.text || '', ...stylePatch('message', m.style) });
+        set({ holoPage: 'message' });
+      }
     }
     if (surprise) {
       hideControls({ hint: false });

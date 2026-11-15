@@ -1,5 +1,6 @@
-// Hologram tab: a small gallery of what can go on the stage (a message, a video, a GIF, a sticker). Picking one
-// opens its page with what that kind needs: the words, the clip, the GIPHY search, then how it looks and the stand.
+// Hologram tab: a small gallery of what can go on the stage (a message, a video, a GIF, a sticker, a countdown).
+// Picking one opens its page with what that kind needs: the words, the clip, the GIPHY search, the date, then how
+// it looks and the stand.
 // There's no "start" button: tapping the stage above the controls shows the hologram full screen.
 
 import { useEffect, useRef, useState } from 'react';
@@ -7,16 +8,16 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Collapsible } from 'radix-ui';
 import {
   Film, MessageCircleHeart, ImagePlay, Upload, Send, RotateCw, FlipHorizontal2, Volume2, VolumeX, Play, Pause,
-  ChevronDown, ChevronLeft, Lightbulb, Search, Sticker,
+  ChevronDown, ChevronLeft, Lightbulb, Search, Sticker, CalendarHeart, Pipette,
 } from 'lucide-react';
 import { keyFor } from '../../js/settings.js';
 import { isGiphyConfigured, searchGifs } from '../../js/giphy.js';
+import { FONTS, COLORS, STYLE_KEYS, styleOf, daysUntil, countdownLines } from '../../js/textstyle.js';
 import { useStore, setSettings } from '../store.js';
 import { toggle, rotate, togglePlay, pickFile, pickMedia, openHoloPage } from '../controllers/stage.js';
 import { send, sendInfo } from '../controllers/inbox.js';
 import { Button, Chip, Section, Segmented, SliderRow, Input, Note, TabBody, cn } from './ui.jsx';
 
-const INK = '#f2dcae';   // the stage's warm ink (js/sources.js), so the Message card previews what the stage shows
 const ease = [0.23, 1, 0.32, 1];
 
 // ---------- shared pieces ----------
@@ -136,7 +137,7 @@ function Card({ id, label, icon: Icon, tilt, className, children }) {
         className,
       )}
     >
-      <div className="relative grid h-24 w-full place-items-center overflow-hidden rounded-[calc(var(--radius-surface)-8px)] bg-black">
+      <div className="relative grid h-20 w-full place-items-center overflow-hidden rounded-[calc(var(--radius-surface)-8px)] bg-black">
         {children}
       </div>
       <div className="flex items-center gap-1.5 px-1 pb-0.5 text-item font-medium">
@@ -148,8 +149,16 @@ function Card({ id, label, icon: Icon, tilt, className, children }) {
   );
 }
 
+// The words' face and colour as CSS, so a card or chip previews what the stage will show.
+const wordsCss = (s, kind) => {
+  const { font, color } = styleOf(s, kind);
+  return { fontFamily: FONTS[font].family, fontWeight: FONTS[font].weight, color };
+};
+
 function Gallery() {
-  const msg = useStore((st) => st.s.msg);
+  const s = useStore((st) => st.s);
+  const msg = s.msg;
+  const days = countdownLines(daysUntil(s.visit));
   const v = useStore((st) => st.video);
   const gif = useStore((st) => st.gif);
   const stk = useStore((st) => st.sticker);
@@ -162,16 +171,24 @@ function Gallery() {
     <TabBody>
       <div className="flex flex-wrap items-start justify-center gap-x-3 gap-y-4 px-1 py-2">
         <Card id="message" label="Message" icon={MessageCircleHeart} tilt="-1.5deg" className="w-[46%]">
-          <span className="line-clamp-2 px-4 text-center text-title font-medium" style={{ color: INK }}>{msg || 'Your words'}</span>
+          <span className="line-clamp-2 px-3 text-center text-title" style={wordsCss(s, 'message')}>{msg || 'Your words'}</span>
         </Card>
-        <Card id="video" label="Video" icon={Film} tilt="2deg" className="w-[40%]">
+        <Card id="countdown" label="Countdown" icon={CalendarHeart} tilt="2deg" className="w-[40%]">
+          {s.visit ? (
+            <span className="flex flex-col items-center text-center leading-none" style={wordsCss(s, 'countdown')}>
+              <span className="tabular text-metric-m">{days.big}</span>
+              <span className="mt-1.5 text-caption">{days.small}</span>
+            </span>
+          ) : <Peek><CalendarHeart /></Peek>}
+        </Card>
+        <Card id="video" label="Video" icon={Film} tilt="1.5deg" className="w-[30%]">
           <Peek>{v.file ? <Play /> : <Upload />}</Peek>
         </Card>
-        <Card id="gif" label="GIF" icon={ImagePlay} tilt="-1deg" className="w-[46%]">
+        <Card id="gif" label="GIF" icon={ImagePlay} tilt="-1deg" className="w-[30%]">
           {gifThumb ? <img src={gifThumb} alt="" className={FIT} /> : <Peek><Search /></Peek>}
         </Card>
         {/* a sticker's background is already transparent, so on black it looks the way it will in the stand */}
-        <Card id="sticker" label="Sticker" icon={Sticker} tilt="1.5deg" className="w-[44%]">
+        <Card id="sticker" label="Sticker" icon={Sticker} tilt="2deg" className="w-[30%]">
           {stkThumb ? <img src={stkThumb} alt="" className={cn(FIT, 'p-2')} /> : <Peek><Sticker /></Peek>}
         </Card>
       </div>
@@ -181,6 +198,43 @@ function Gallery() {
 
 // ---------- the pages ----------
 
+// The words' face (each chip in its own face) and colour (swatches, then any colour), like a story's text tools.
+function TextStyle({ kind }) {
+  const s = useStore((st) => st.s);
+  const { font, color } = styleOf(s, kind);
+  const keys = STYLE_KEYS[kind];
+  const custom = !COLORS.includes(color);
+  return (
+    <Section title="Text">
+      <div className="scroll-x -mx-4 flex gap-2 px-4">
+        {Object.entries(FONTS).map(([k, f]) => (
+          <Chip key={k} on={font === k} onClick={() => setSettings({ [keys.font]: k })} className="shrink-0" style={{ fontFamily: f.family, fontWeight: f.weight }}>
+            {f.label}
+          </Chip>
+        ))}
+      </div>
+      <div className="scroll-x -mx-4 flex items-center gap-2.5 px-4 py-1">
+        {COLORS.map((c) => (
+          <button
+            key={c} type="button" aria-label={'Colour ' + c} aria-pressed={color === c}
+            onClick={() => setSettings({ [keys.color]: c })}
+            className={cn('press size-7 shrink-0 rounded-full', color === c && 'ring-2 ring-foreground ring-offset-2 ring-offset-black')}
+            style={{ background: c }}
+          />
+        ))}
+        {/* any colour: the system picker, behind a swatch that shows the colour picked there */}
+        <label
+          className={cn('press relative grid size-7 shrink-0 place-items-center rounded-full bg-fill-2 text-foreground [&_svg]:size-icon-sm', custom && 'ring-2 ring-foreground ring-offset-2 ring-offset-black')}
+          style={custom ? { background: color } : undefined}
+        >
+          {!custom && <Pipette />}
+          <input type="color" aria-label="Any colour" value={color} onChange={(e) => setSettings({ [keys.color]: e.target.value })} className="absolute inset-0 size-full cursor-pointer opacity-0" />
+        </label>
+      </div>
+    </Section>
+  );
+}
+
 function MessagePage() {
   const msg = useStore((st) => st.s.msg);
   const footer = useSendFooter();
@@ -189,6 +243,7 @@ function MessagePage() {
       <PageHeader title="Message" />
       <TabBody footer={footer}>
         <Input value={msg} maxLength={60} placeholder="Your message" onChange={(e) => setSettings({ msg: e.target.value })} />
+        <TextStyle kind="message" />
         <Look />
         <Stand />
       </TabBody>
@@ -366,8 +421,38 @@ function GiphyPage({ kind }) {
   );
 }
 
+// Today as YYYY-MM-DD in local time (the date input's min).
+const today = () => {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+};
+
+function CountdownPage() {
+  const visit = useStore((st) => st.s.visit);
+  const footer = useSendFooter();
+  const n = daysUntil(visit);
+  return (
+    <>
+      <PageHeader title="Countdown" />
+      <TabBody footer={footer}>
+        <Section title="Next visit">
+          <Input
+            type="date" value={visit} min={today()} aria-label="Date of the next visit"
+            onChange={(e) => setSettings({ visit: e.target.value })}
+            className="[color-scheme:dark]"
+          />
+          <Note>{n === null ? 'The stage counts the days down to it' : n < 0 ? 'That day has passed: pick the next one' : ''}</Note>
+        </Section>
+        <TextStyle kind="countdown" />
+        <Look />
+        <Stand />
+      </TabBody>
+    </>
+  );
+}
+
 const PAGES = {
-  message: MessagePage, video: VideoPage,
+  message: MessagePage, video: VideoPage, countdown: CountdownPage,
   gif: () => <GiphyPage key="gif" kind="gif" />,
   sticker: () => <GiphyPage key="sticker" kind="sticker" />,
 };

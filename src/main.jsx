@@ -4,7 +4,8 @@ import './styles.css';
 import { createRoot } from 'react-dom/client';
 import { S, loadSettings, keyFor } from '../js/settings.js';
 import { createProcessor } from '../js/processing.js';
-import { video, videoState, gifVideo, gifState, sticker, testPattern, renderMessage } from '../js/sources.js';
+import { styleOf } from '../js/textstyle.js';
+import { video, videoState, gifVideo, gifState, sticker, testPattern, renderMessage, renderCountdown } from '../js/sources.js';
 import { createStage, drawFrame } from '../js/layout.js';
 import { initPWA } from '../js/pwa.js';
 import { getState, subscribe, refreshSettings } from './store.js';
@@ -60,7 +61,8 @@ function currentSource(t) {
     if (!c) return null;
     return processVideo(c, { src: 'sticker', view: 'bottom', oval: 1.6, gain: S.gain, thr: S.sthr, soft: S.ssoft });
   }
-  if (S.mode === 'message') return renderMessage(t, S.msg);
+  if (S.mode === 'message') return renderMessage(t, S.msg, styleOf(S, 'message'));
+  if (S.mode === 'countdown') return renderCountdown(S.visit, styleOf(S, 'countdown'));
   return testPattern();
 }
 

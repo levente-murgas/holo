@@ -132,7 +132,7 @@ export async function createInbox(onChange) {
     },
 
     // Send a clip (file + how to show it) and/or a text to the partner.
-    async send({ file, text, src = 'rec', view = 'bottom' }) {
+    async send({ file, text, src = 'rec', view = 'bottom', style = null }) {
       if (!state.me || !state.partner) throw new Error('Not signed in');
       let path = null;
       if (file) {
@@ -142,7 +142,7 @@ export async function createInbox(onChange) {
         if (error) throw error;
       }
       const { data, error } = await sb.from('messages')
-        .insert({ recipient: state.partner.user_id, clip_path: path, text: text || null, src, view })
+        .insert({ recipient: state.partner.user_id, clip_path: path, text: text || null, src, view, style })
         .select().single();
       if (error) {
         if (path) await sb.storage.from(BUCKET).remove([path]); // don't leave an orphaned clip

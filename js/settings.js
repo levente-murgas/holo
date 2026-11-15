@@ -10,6 +10,9 @@ export const DEF = {
   sthr: 0.02, ssoft: 0.06,    // and for stickers (only to trim a dark fringe: their background is already gone)
   oval: 0.95, gain: 1.4, size: 0.9, pos: 0, gap: 1,
   msg: 'Miss you already',
+  font: 'classic', color: '#f2dcae',     // how the message's words look: js/textstyle.js
+  cdFont: 'classic', cdColor: '#f2dcae', // and the countdown's
+  visit: '',                  // the countdown's date, YYYY-MM-DD
   src: 'rec',                 // video type: rec | holo1 | holo4
   view: 'bottom',             // which view of a 4-view video: bottom | top | left | right
   surprise: true,             // Surprise mode (on unless turned off): received messages open only once the phone is face down in the stand
@@ -24,7 +27,7 @@ export function loadSettings() {
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; } catch (e) { /* private mode etc. */ }
   for (const k in DEF) S[k] = (k in saved) ? saved[k] : DEF[k];
-  if (S.mode !== 'video') S.mode = 'message';   // the old Test mode is gone; a GIF isn't kept between visits
+  if (!['video', 'message', 'countdown'].includes(S.mode)) S.mode = 'message';   // the old Test mode is gone; a GIF or sticker isn't kept between visits
   return S;
 }
 
