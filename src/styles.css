@@ -97,6 +97,13 @@
   :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
   html { -webkit-text-size-adjust: 100%; }
+  /* iPhone, installed app (iOS 26): WebKit draws the app shorter than the screen, by the status bar's height,
+     for as long as the page is shorter than the screen; and the page is exactly as tall as what's drawn. Make the
+     page as tall as the screen (what's drawn plus the status bar, never more than the screen) and iOS draws all of
+     it. Installed only: in a browser tab this would make the page scroll. (frappe-ui#1284, WebKit bug 301108) */
+  @media (display-mode: standalone), (display-mode: fullscreen) {
+    html { min-height: min(100lvh, calc(100% + env(safe-area-inset-top))); }
+  }
   body {
     @apply text-foreground antialiased font-sans;
     font-size: var(--text-body);

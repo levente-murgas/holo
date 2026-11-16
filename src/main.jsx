@@ -19,8 +19,10 @@ import { App } from './App.jsx';
 initPWA();
 
 // iPhone, installed app: the page can come out shorter than the screen (by about the status bar's height), so
-// anything pinned to the bottom stops short with a black band under it. Measure the shortfall and let the
-// controls reach past it (Controls.jsx). Where the page fills the screen this is 0, so it fixes itself.
+// anything pinned to the bottom stops short with a black band under it. src/styles.css asks iOS to draw it all;
+// where that works the page fills the screen and this is 0. Where it doesn't, measure the shortfall and let the
+// controls reach past it (Controls.jsx). Measured again whenever the app comes back, since the size can change
+// without a resize event.
 function measureViewportGap() {
   const ios = navigator.standalone === true;
   const portrait = window.innerHeight > window.innerWidth;
@@ -30,6 +32,9 @@ function measureViewportGap() {
 }
 measureViewportGap();
 window.addEventListener('resize', measureViewportGap);
+window.addEventListener('pageshow', measureViewportGap);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') measureViewportGap(); });
+requestAnimationFrame(() => requestAnimationFrame(measureViewportGap));   // once the CSS above has had its say
 loadSettings();
 if (S.layout !== 'single') S.layout = 'single';   // the pyramid option is gone from the controls
 refreshSettings();
