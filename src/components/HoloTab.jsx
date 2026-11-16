@@ -23,12 +23,16 @@ const ease = [0.23, 1, 0.32, 1];
 
 // ---------- shared pieces ----------
 
-// Only the label changes; the settings keep their stored values. Size, brightness and the oval are multipliers
-// (100% = as it is); the cut and softness are shares of full brightness. Position is a place, not an amount: it stays a number.
-const PERCENT = new Set(['thr', 'soft', 'oval', 'gain', 'size']);
-const fmt = (k, v) => {
+// Only the label changes; the settings keep their stored values. Size, brightness and the oval are multipliers,
+// so they read as a percentage of as-is (100% = unchanged). The cut and softness have no natural 100%, so they read
+// as the thumb's place on the slider, 0% at the left to 100% at the right. Position is a place: it stays a number.
+const SCALE = new Set(['oval', 'gain', 'size']);
+const SPAN = new Set(['thr', 'soft']);
+const fmt = (k, v, min, max) => {
   if (k === 'oval' && v >= 1.58) return 'off';
-  return PERCENT.has(k) ? Math.round(v * 100) + '%' : (+v).toFixed(2);
+  if (SCALE.has(k)) return Math.round(v * 100) + '%';
+  if (SPAN.has(k)) return Math.round(((v - min) / (max - min)) * 100) + '%';
+  return (+v).toFixed(2);
 };
 
 function Slider({ k, label, min, max, step }) {
@@ -37,7 +41,7 @@ function Slider({ k, label, min, max, step }) {
   return (
     <SliderRow
       label={label} min={min} max={max} step={step}
-      value={s[key]} display={fmt(k, s[key])}
+      value={s[key]} display={fmt(k, s[key], min, max)}
       onChange={(v) => setSettings({ [keyFor(k)]: v })}
     />
   );
