@@ -23,7 +23,13 @@ const ease = [0.23, 1, 0.32, 1];
 
 // ---------- shared pieces ----------
 
-const fmt = (k, v) => (k === 'oval' && v >= 1.58 ? 'off' : (+v).toFixed(2));
+// Only the label changes; the settings keep their stored values. Size, brightness and the oval are multipliers
+// (100% = as it is); the cut and softness are shares of full brightness. Position is a place, not an amount: it stays a number.
+const PERCENT = new Set(['thr', 'soft', 'oval', 'gain', 'size']);
+const fmt = (k, v) => {
+  if (k === 'oval' && v >= 1.58) return 'off';
+  return PERCENT.has(k) ? Math.round(v * 100) + '%' : (+v).toFixed(2);
+};
 
 function Slider({ k, label, min, max, step }) {
   const s = useStore((st) => st.s);
