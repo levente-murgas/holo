@@ -37,12 +37,9 @@ async function push(sub: Sub, payload: object): Promise<number> {
   return res.status;
 }
 
-function messageText(sender: string, m: { clip_path: string | null; text: string | null; src?: string }) {
-  if (m.src === "gif") return { title: sender + " sent you a GIF", body: "Tap to see it" };
-  if (m.src === "countdown") return { title: sender + " sent you a countdown", body: "Tap to see it" };
-  if (m.src === "sticker") return { title: sender + " sent you a sticker", body: "Tap to see it" };
-  if (m.clip_path) return { title: sender + " sent you a holo", body: "Tap to watch" };
-  return { title: sender + " sent you a message", body: "Tap to see it" };   // the words stay a surprise until it's opened
+// Every kind reads the same, so not even the type gives the surprise away.
+function messageText(sender: string) {
+  return { title: sender + " sent you a holo", body: "Tap to see it" };
 }
 
 export default {
@@ -67,7 +64,7 @@ export default {
       if (m.sender !== me) return Response.json({ error: "not your message" }, { status: 403 });
       const { data: sender } = await ctx.supabase.from("members").select("name").eq("user_id", me).single();
       to = m.recipient;
-      payload = { ...messageText(sender?.name ?? "Someone", m), tag: "holo-msg-" + m.id };
+      payload = { ...messageText(sender?.name ?? "Someone"), tag: "holo-msg-" + m.id };
     } else if (action === "call") {
       const { data: members } = await ctx.supabase.from("members").select("user_id, name");
       const me_ = members?.find((m: { user_id: string }) => m.user_id === me);
