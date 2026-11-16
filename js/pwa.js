@@ -30,11 +30,30 @@ export function initPWA() {
 // The installed app is often resumed from memory instead of reloaded, so it would keep running an
 // old version. Each deploy changes sw.js (the build id), so: when Holo comes to the front, ask the
 // browser to check sw.js; when a new version takes over, reload once (later, if a call is on).
+// But on a fresh launch the page was just fetched from the network, so it's usually the new build already;
+// reloading then only flashes the screen twice (and on iPhone could leave the app a size too short). Ask the new
+// worker its build and reload only when it differs from the one running.
+const RUNNING = typeof __HOLO_BUILD__ === 'string' ? __HOLO_BUILD__ : '';
+
+function workerBuild(sw) {
+  return new Promise((done) => {
+    const ch = new MessageChannel();
+    const t = setTimeout(() => done(null), 1500);   // no answer: assume it's different
+    ch.port1.onmessage = (e) => { clearTimeout(t); done(e.data); };
+    try { sw.postMessage('build', [ch.port2]); } catch (_) { clearTimeout(t); done(null); }
+  });
+}
+
 function watchForUpdates(reg) {
   const hadController = !!navigator.serviceWorker.controller;
   let pending = false;
   const reloadIfFree = () => { if (!busy()) location.reload(); else pending = true; };
-  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) reloadIfFree(); });
+  navigator.serviceWorker.addEventListener('controllerchange', async () => {
+    if (!hadController) return;
+    const sw = navigator.serviceWorker.controller;
+    if (RUNNING && sw && (await workerBuild(sw)) === RUNNING) return;   // already the newest: nothing to reload
+    reloadIfFree();
+  });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
     if (pending) reloadIfFree();

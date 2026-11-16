@@ -15,6 +15,9 @@ const walk = (dir) => readdirSync(dir).flatMap((n) => {
 // The service worker caches the app shell for offline use. Vite gives the built files hashed names,
 // so the list can't be written by hand: after the build, put the real file names and a build id into dist/sw.js.
 // The build id changes on every deploy, which is how phones notice a new version (js/pwa.js).
+// One id per build, shared by sw.js and the page (__HOLO_BUILD__), so the page can tell whether it's already the newest.
+const BUILD = (process.env.GITHUB_SHA || '').slice(0, 12) || 'local-' + Date.now().toString(36);
+
 function serviceWorkerShell() {
   let outDir = 'dist';
   return {
@@ -26,10 +29,9 @@ function serviceWorkerShell() {
         .map((f) => relative(outDir, f).split(sep).join('/'))
         .filter((f) => f !== 'sw.js' && !f.endsWith('.map'))
         .filter((f) => !f.endsWith('.woff2') || f.includes('latin'));   // fonts: only the subsets this page uses
-      const build = (process.env.GITHUB_SHA || '').slice(0, 12) || 'local-' + Date.now().toString(36);
       const sw = join(outDir, 'sw.js');
       const src = readFileSync(sw, 'utf8')
-        .replace("const BUILD = '__BUILD__'", 'const BUILD = ' + JSON.stringify(build))
+        .replace("const BUILD = '__BUILD__'", 'const BUILD = ' + JSON.stringify(BUILD))
         .replace("const SHELL = ['__SHELL__']", 'const SHELL = ' + JSON.stringify(['./', ...files]));
       writeFileSync(sw, src);
     },
@@ -39,6 +41,7 @@ function serviceWorkerShell() {
 export default defineConfig({
   base: './',
   plugins: [react(), tailwindcss(), serviceWorkerShell()],
+  define: { __HOLO_BUILD__: JSON.stringify(BUILD) },
   server: { port: 8000, strictPort: true },    // http://localhost:8000/ is an allowed Supabase redirect URL
   preview: { port: 8000, strictPort: true },
 });

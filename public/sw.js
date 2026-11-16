@@ -24,6 +24,11 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+// The page asks which build this is (js/pwa.js): if it's already running this build, it needn't reload.
+self.addEventListener('message', (e) => {
+  if (e.data === 'build' && e.ports[0]) e.ports[0].postMessage(BUILD);
+});
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
