@@ -1,9 +1,10 @@
 // Inbox: sign-in, sending what's on the stage, and playing a received message (with Surprise mode).
 
 import { S } from '../../js/settings.js';
-import { video, videoState, gifVideo, gifState, sticker, stickerState } from '../../js/sources.js';
+import { video, videoState, gifVideo, gifState, sticker, stickerState, doodle } from '../../js/sources.js';
 import { isSurprise } from '../../js/surprise-logic.js';
 import { styleOf, stylePatch, daysUntil } from '../../js/textstyle.js';
+import { cleanStrokes, hasInk, toFileData } from '../../js/doodle.js';
 import { isConfigured, createInbox } from '../../js/inbox.js';
 import { isInstalled } from '../../js/pwa.js';
 import { set, getState, setSettings } from '../store.js';
@@ -69,6 +70,7 @@ export function sendInfo(s, st, v, gif, stk) {
   if (s.mode === 'gif') return gif && gif.ready ? { label: 'Send this GIF to ' + to, can: true } : { label: 'Pick a GIF to send', can: false };
   if (s.mode === 'sticker') return stk && stk.ready ? { label: 'Send this sticker to ' + to, can: true } : { label: 'Pick a sticker to send', can: false };
   if (s.mode === 'message') return { label: 'Send this message to ' + to, can: !!s.msg };
+  if (s.mode === 'doodle') return hasInk(s.doodle) ? { label: 'Send this doodle to ' + to, can: true } : { label: 'Draw something to send', can: false };
   if (s.mode === 'countdown') {
     const n = daysUntil(s.visit);
     return n !== null && n >= 0 ? { label: 'Send this countdown to ' + to, can: true } : { label: 'Pick the date to send', can: false };
@@ -88,6 +90,9 @@ export async function send() {
     } else if (S.mode === 'sticker') {
       setStatus('Uploading…');
       await inbox.send({ file: stickerState.file, src: 'sticker' });
+    } else if (S.mode === 'doodle') {
+      setStatus('Sending…');
+      await inbox.send({ file: new File([toFileData(S.doodle)], 'doodle.json', { type: 'application/json' }), src: 'doodle' });
     } else if (S.mode === 'countdown') {
       setStatus('');
       await inbox.send({ text: S.visit, src: 'countdown', style: styleOf(S, 'countdown') });
@@ -110,7 +115,11 @@ export async function play(m) {
   try {
     setStatus(m.clip_path ? 'Downloading…' : '');
     const blob = await inbox.open(m);
-    if (blob && (m.src === 'gif' || m.src === 'sticker')) {
+    if (blob && m.src === 'doodle') {
+      setSettings({ mode: 'doodle', doodle: cleanStrokes(JSON.parse(await blob.text())) });   // drawn the way it was sent
+      set({ holoPage: 'doodle' });
+      setStatus('');
+    } else if (blob && (m.src === 'gif' || m.src === 'sticker')) {
       const gif = m.src === 'gif';
       setSettings({ mode: m.src });
       await loadReceivedMedia(m.src, gif ? new File([blob], 'gif.mp4', { type: 'video/mp4' }) : new File([blob], 'sticker.gif', { type: 'image/gif' }), !surprise);
@@ -148,6 +157,7 @@ export async function play(m) {
 function playFromStart() {
   if (S.mode === 'gif') { gifVideo.currentTime = 0; gifVideo.play().catch(() => {}); return; }
   if (S.mode === 'sticker') { sticker.restart(); sticker.play(); return; }
+  if (S.mode === 'doodle') { doodle.restart(); return; }
   video.currentTime = 0;
   video.muted = !S.sound;
   video.play().catch(() => { video.muted = true; video.play().catch(() => {}); });

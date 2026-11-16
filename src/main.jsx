@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { S, loadSettings, keyFor } from '../js/settings.js';
 import { createProcessor } from '../js/processing.js';
 import { styleOf } from '../js/textstyle.js';
-import { video, videoState, gifVideo, gifState, sticker, testPattern, renderMessage, renderCountdown } from '../js/sources.js';
+import { video, videoState, gifVideo, gifState, sticker, doodle, testPattern, renderMessage, renderCountdown } from '../js/sources.js';
 import { createStage, drawFrame } from '../js/layout.js';
 import { initPWA } from '../js/pwa.js';
 import { getState, subscribe, refreshSettings } from './store.js';
@@ -76,6 +76,11 @@ function currentSource(t) {
   }
   if (S.mode === 'message') return renderMessage(t, S.msg, styleOf(S, 'message'));
   if (S.mode === 'countdown') return renderCountdown(S.visit, styleOf(S, 'countdown'));
+  if (S.mode === 'doodle') {
+    // while it's being drawn the stage shows all of it; as a hologram it's drawn again, stroke by stroke
+    doodle.set(S.doodle);
+    return doodle.frame(t, !getState().controls);
+  }
   return testPattern();
 }
 

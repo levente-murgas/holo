@@ -1,5 +1,7 @@
 // Settings: defaults, load/save in localStorage, and which cut values apply to the current video type.
 
+import { cleanStrokes } from './doodle.js';
+
 const STORAGE_KEY = 'holo.v1';
 
 export const DEF = {
@@ -13,6 +15,7 @@ export const DEF = {
   font: 'classic', color: '#f2dcae',     // how the message's words look: js/textstyle.js
   cdFont: 'classic', cdColor: '#f2dcae', // and the countdown's
   visit: '',                  // the countdown's date, YYYY-MM-DD
+  doodle: [],                 // the doodle being drawn: its strokes (js/doodle.js)
   src: 'rec',                 // video type: rec | holo1 | holo4
   view: 'bottom',             // which view of a 4-view video: bottom | top | left | right
   surprise: true,             // Surprise mode (on unless turned off): received messages open only once the phone is face down in the stand
@@ -27,7 +30,8 @@ export function loadSettings() {
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; } catch (e) { /* private mode etc. */ }
   for (const k in DEF) S[k] = (k in saved) ? saved[k] : DEF[k];
-  if (!['video', 'message', 'countdown'].includes(S.mode)) S.mode = 'message';   // the old Test mode is gone; a GIF or sticker isn't kept between visits
+  if (!['video', 'message', 'countdown', 'doodle'].includes(S.mode)) S.mode = 'message';   // the old Test mode is gone; a GIF or sticker isn't kept between visits
+  S.doodle = cleanStrokes(S.doodle);
   return S;
 }
 

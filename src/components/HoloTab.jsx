@@ -1,4 +1,4 @@
-// Hologram tab: a small gallery of what can go on the stage (a message, a video, a GIF, a sticker, a countdown).
+// Hologram tab: a small gallery of what can go on the stage (a message, a doodle, a countdown, a video, a GIF, a sticker).
 // Picking one opens its page with what that kind needs: the words, the clip, the GIPHY search, the date, then how
 // it looks and the stand.
 // There's no "start" button: tapping the stage above the controls shows the hologram full screen.
@@ -7,16 +7,18 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Collapsible } from 'radix-ui';
 import {
-  Film, MessageCircleHeart, ImagePlay, Upload, Send, RotateCw, FlipHorizontal2, Volume2, VolumeX, Play, Pause,
-  ChevronDown, ChevronLeft, Lightbulb, Search, Sticker, CalendarHeart, Pipette,
+  Upload, Send, RotateCw, FlipHorizontal2, Volume2, VolumeX, Play, Pause,
+  ChevronDown, ChevronLeft, Lightbulb, Search, Sticker, CalendarHeart, Pipette, Brush, Eraser, Undo2, Trash2,
 } from 'lucide-react';
 import { keyFor } from '../../js/settings.js';
 import { isGiphyConfigured, searchGifs } from '../../js/giphy.js';
-import { FONTS, COLORS, STYLE_KEYS, styleOf, daysUntil, countdownLines } from '../../js/textstyle.js';
+import { FONTS, COLORS, INK, STYLE_KEYS, styleOf, daysUntil, countdownLines } from '../../js/textstyle.js';
+import { SIZES, W as DW, H as DH, drawAll, hasInk } from '../../js/doodle.js';
 import { useStore, setSettings } from '../store.js';
 import { toggle, rotate, togglePlay, pickFile, pickMedia, openHoloPage } from '../controllers/stage.js';
 import { send, sendInfo } from '../controllers/inbox.js';
 import { DateWheel } from './DateWheel.jsx';
+import { DoodlePad } from './DoodlePad.jsx';
 import { Button, Chip, Section, Segmented, SliderRow, Input, Note, TabBody, cn } from './ui.jsx';
 
 const ease = [0.23, 1, 0.32, 1];
@@ -133,8 +135,10 @@ const Peek = ({ children }) => (
   <span className="grid size-10 place-items-center rounded-full bg-fill-2 text-foreground [&_svg]:size-icon">{children}</span>
 );
 
-/** A card in the gallery: a small black window like the stage, with a peek of that kind, and its name. */
-function Card({ id, label, icon: Icon, tilt, className, children }) {
+/** A card in the gallery: a small black window like the stage, with a peek of that kind, and its name.
+ *  Three cards share a row, so the name stands alone (the window already shows the kind), and a dot in the
+ *  window's corner marks the one on the stage. */
+function Card({ id, label, tilt, className, children }) {
   const live = useStore((st) => st.s.mode === id);
   return (
     <button
@@ -150,12 +154,9 @@ function Card({ id, label, icon: Icon, tilt, className, children }) {
     >
       <div className="relative grid h-20 w-full place-items-center overflow-hidden rounded-[calc(var(--radius-surface)-8px)] bg-black">
         {children}
+        {live && <span className="dot absolute top-2 right-2 bg-primary" title="On the stage" />}
       </div>
-      <div className="flex items-center gap-1.5 px-1 pb-0.5 text-item font-medium">
-        <Icon className="size-icon-sm text-muted-foreground" />
-        {label}
-        {live && <span className="dot ml-auto bg-primary" title="On the stage" />}
-      </div>
+      <div className="truncate pb-0.5 text-center text-body font-medium">{label}</div>
     </button>
   );
 }
@@ -181,10 +182,13 @@ function Gallery() {
   return (
     <TabBody>
       <div className="flex flex-wrap items-start justify-center gap-x-3 gap-y-4 px-1 py-2">
-        <Card id="message" label="Message" icon={MessageCircleHeart} tilt="-1.5deg" className="w-[46%]">
-          <span className="line-clamp-2 px-3 text-center text-title" style={wordsCss(s, 'message')}>{msg || 'Your words'}</span>
+        <Card id="message" label="Message" tilt="-1.5deg" className="w-[30%]">
+          <span className="line-clamp-3 px-2 text-center text-item" style={wordsCss(s, 'message')}>{msg || 'Your words'}</span>
         </Card>
-        <Card id="countdown" label="Countdown" icon={CalendarHeart} tilt="2deg" className="w-[40%]">
+        <Card id="doodle" label="Doodle" tilt="1deg" className="w-[30%]">
+          {hasInk(s.doodle) ? <DoodleThumb strokes={s.doodle} /> : <Peek><Brush /></Peek>}
+        </Card>
+        <Card id="countdown" label="Countdown" tilt="2deg" className="w-[30%]">
           {s.visit ? (
             <span className="flex flex-col items-center text-center leading-none" style={wordsCss(s, 'countdown')}>
               <span className="tabular text-metric-m">{days.big}</span>
@@ -192,14 +196,14 @@ function Gallery() {
             </span>
           ) : <Peek><CalendarHeart /></Peek>}
         </Card>
-        <Card id="video" label="Video" icon={Film} tilt="1.5deg" className="w-[30%]">
+        <Card id="video" label="Video" tilt="1.5deg" className="w-[30%]">
           <Peek>{v.file ? <Play /> : <Upload />}</Peek>
         </Card>
-        <Card id="gif" label="GIF" icon={ImagePlay} tilt="-1deg" className="w-[30%]">
+        <Card id="gif" label="GIF" tilt="-1deg" className="w-[30%]">
           {gifThumb ? <img src={gifThumb} alt="" className={FIT} /> : <Peek><Search /></Peek>}
         </Card>
         {/* a sticker's background is already transparent, so on black it looks the way it will in the stand */}
-        <Card id="sticker" label="Sticker" icon={Sticker} tilt="2deg" className="w-[30%]">
+        <Card id="sticker" label="Sticker" tilt="2deg" className="w-[30%]">
           {stkThumb ? <img src={stkThumb} alt="" className={cn(FIT, 'p-2')} /> : <Peek><Sticker /></Peek>}
         </Card>
       </div>
@@ -209,12 +213,36 @@ function Gallery() {
 
 // ---------- the pages ----------
 
-// The words' face (each chip in its own face) and colour (swatches, then any colour), like a story's text tools.
+// Colour swatches, then any colour (the system picker, behind a swatch that shows the colour picked there).
+function ColorRow({ color, onChange, off = false }) {
+  const custom = !COLORS.includes(color);
+  const ring = (on) => on && !off && 'ring-2 ring-foreground ring-offset-2 ring-offset-black';
+  return (
+    <div className="scroll-x -mx-4 flex items-center gap-2.5 px-4 py-1">
+      {COLORS.map((c) => (
+        <button
+          key={c} type="button" aria-label={'Colour ' + c} aria-pressed={!off && color === c}
+          onClick={() => onChange(c)}
+          className={cn('press size-7 shrink-0 rounded-full', ring(color === c))}
+          style={{ background: c }}
+        />
+      ))}
+      <label
+        className={cn('press relative grid size-7 shrink-0 place-items-center rounded-full bg-fill-2 text-foreground [&_svg]:size-icon-sm', ring(custom))}
+        style={custom ? { background: color } : undefined}
+      >
+        {!custom && <Pipette />}
+        <input type="color" aria-label="Any colour" value={color} onChange={(e) => onChange(e.target.value)} className="absolute inset-0 size-full cursor-pointer opacity-0" />
+      </label>
+    </div>
+  );
+}
+
+// The words' face (each chip in its own face) and colour, like a story's text tools.
 function TextStyle({ kind }) {
   const s = useStore((st) => st.s);
   const { font, color } = styleOf(s, kind);
   const keys = STYLE_KEYS[kind];
-  const custom = !COLORS.includes(color);
   return (
     <Section title="Text">
       <div className="scroll-x -mx-4 flex gap-2 px-4">
@@ -224,24 +252,7 @@ function TextStyle({ kind }) {
           </Chip>
         ))}
       </div>
-      <div className="scroll-x -mx-4 flex items-center gap-2.5 px-4 py-1">
-        {COLORS.map((c) => (
-          <button
-            key={c} type="button" aria-label={'Colour ' + c} aria-pressed={color === c}
-            onClick={() => setSettings({ [keys.color]: c })}
-            className={cn('press size-7 shrink-0 rounded-full', color === c && 'ring-2 ring-foreground ring-offset-2 ring-offset-black')}
-            style={{ background: c }}
-          />
-        ))}
-        {/* any colour: the system picker, behind a swatch that shows the colour picked there */}
-        <label
-          className={cn('press relative grid size-7 shrink-0 place-items-center rounded-full bg-fill-2 text-foreground [&_svg]:size-icon-sm', custom && 'ring-2 ring-foreground ring-offset-2 ring-offset-black')}
-          style={custom ? { background: color } : undefined}
-        >
-          {!custom && <Pipette />}
-          <input type="color" aria-label="Any colour" value={color} onChange={(e) => setSettings({ [keys.color]: e.target.value })} className="absolute inset-0 size-full cursor-pointer opacity-0" />
-        </label>
-      </div>
+      <ColorRow color={color} onChange={(c) => setSettings({ [keys.color]: c })} />
     </Section>
   );
 }
@@ -452,8 +463,64 @@ function CountdownPage() {
   );
 }
 
+// The doodle's preview on its card: the whole drawing, small.
+function DoodleThumb({ strokes }) {
+  const cv = useRef(null);
+  useEffect(() => { drawAll(cv.current.getContext('2d'), strokes, 0.5); }, [strokes]);
+  return <canvas ref={cv} width={DW / 2} height={DH / 2} className={FIT} />;
+}
+
+// The pen stays as it was left while the app is open; undo goes back through every stroke and a clear.
+let pen = { color: INK, size: 'medium', erase: false };
+const past = [];
+
+function DoodlePage() {
+  const strokes = useStore((st) => st.s.doodle);
+  const [tool, setToolState] = useState(pen);
+  const [, setDepth] = useState(past.length);   // re-render when undo becomes (un)available
+  const footer = useSendFooter();
+  const setTool = (patch) => { pen = { ...tool, ...patch }; setToolState(pen); };
+  const change = (next) => { past.push(strokes); setDepth(past.length); setSettings({ doodle: next }); };
+  const undo = () => { if (past.length) { setSettings({ doodle: past.pop() }); setDepth(past.length); } };
+
+  return (
+    <>
+      <PageHeader title="Doodle" />
+      <TabBody footer={footer}>
+        <Section>
+          <div className="relative">
+            <DoodlePad
+              strokes={strokes}
+              tool={{ color: tool.color, size: SIZES[tool.size], erase: tool.erase }}
+              onStroke={(st) => change([...strokes, st])}
+            />
+            {!strokes.length && (
+              <span className="pointer-events-none absolute inset-0 grid place-items-center text-item text-muted-foreground">Draw here</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {Object.keys(SIZES).map((k) => (
+              <Chip key={k} on={!tool.erase && tool.size === k} aria-label={k[0].toUpperCase() + k.slice(1) + ' pen'} onClick={() => setTool({ size: k, erase: false })}>
+                <span className="grid size-4 place-items-center"><span className="rounded-full" style={{ background: tool.color, width: SIZES[k] / 1.5 + 2, height: SIZES[k] / 1.5 + 2 }} /></span>
+              </Chip>
+            ))}
+            <Chip on={tool.erase} onClick={() => setTool({ erase: !tool.erase })}><Eraser /> Eraser</Chip>
+            <span className="ml-auto flex gap-1">
+              <Button variant="ghost" size="icon" aria-label="Undo" disabled={!past.length} onClick={undo}><Undo2 /></Button>
+              <Button variant="ghost" size="icon" aria-label="Clear the drawing" disabled={!strokes.length} onClick={() => change([])}><Trash2 /></Button>
+            </span>
+          </div>
+          <ColorRow color={tool.color} off={tool.erase} onChange={(color) => setTool({ color, erase: false })} />
+        </Section>
+        <Look />
+        <Stand />
+      </TabBody>
+    </>
+  );
+}
+
 const PAGES = {
-  message: MessagePage, video: VideoPage, countdown: CountdownPage,
+  message: MessagePage, video: VideoPage, countdown: CountdownPage, doodle: DoodlePage,
   gif: () => <GiphyPage key="gif" kind="gif" />,
   sticker: () => <GiphyPage key="sticker" kind="sticker" />,
 };

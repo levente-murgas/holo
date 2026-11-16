@@ -2,6 +2,7 @@
 // the message card and the countdown.
 
 import { createStickerPlayer } from './sticker.js';
+import { createDoodlePlayer } from './doodle.js';
 import { FONTS, cleanStyle, fontCss, daysUntil, countdownLines } from './textstyle.js';
 
 export const video = document.createElement('video');
@@ -54,6 +55,9 @@ export async function loadStickerFile(file) {
   stickerState.file = file;
   document.dispatchEvent(new Event('holo:change'));
 }
+
+// Doodles: replayed stroke by stroke on the stage (js/doodle.js).
+export const doodle = createDoodlePlayer();
 
 // What the stage shows besides video: words, in the face and colour picked (js/textstyle.js), warm brass by default.
 // The test is the same words, fixed: if they read normally and the right way up in the reflection,

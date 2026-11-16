@@ -1,6 +1,6 @@
 // Inbox tab: the holos and messages you've sent each other, newest first. Tap one to put it on the stage.
 
-import { Film, Heart, ImagePlay, Sticker, CalendarHeart, Inbox as InboxIcon, ArrowUpRight } from 'lucide-react';
+import { Film, Heart, Brush, ImagePlay, Sticker, CalendarHeart, Inbox as InboxIcon, ArrowUpRight } from 'lucide-react';
 import { timeAgo } from '../../js/inbox-logic.js';
 import { useStore } from '../store.js';
 import { play, nameOf } from '../controllers/inbox.js';
@@ -14,6 +14,7 @@ function Message({ m, me }) {
   const gif = m.src === 'gif';
   const stk = m.src === 'sticker';
   const cd = m.src === 'countdown';
+  const dd = m.src === 'doodle';
   return (
     <li>
       <button
@@ -21,8 +22,8 @@ function Message({ m, me }) {
         onClick={() => play(m)}
         className={cn('press flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-left hover:bg-fill-1', unseen && 'bg-fill-1')}
       >
-        <IconTile className={cn(unseen && 'text-primary', !video && 'text-heart')}>
-          {cd ? <CalendarHeart /> : stk ? <Sticker /> : gif ? <ImagePlay /> : video ? <Film /> : <Heart />}
+        <IconTile className={cn(unseen && 'text-primary', (!video || dd) && 'text-heart')}>
+          {dd ? <Brush /> : cd ? <CalendarHeart /> : stk ? <Sticker /> : gif ? <ImagePlay /> : video ? <Film /> : <Heart />}
         </IconTile>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 text-item">
@@ -30,7 +31,7 @@ function Message({ m, me }) {
             <span className={cn(unseen && 'font-medium')}>{mine ? 'To ' + nameOf(m.recipient) : nameOf(m.sender)}</span>
           </div>
           <div className="mt-0.5 truncate text-meta text-muted-foreground">
-            {cd ? 'Countdown' : stk ? 'Sticker' : gif ? 'GIF' : video ? 'Holo video' : 'Message'}{m.text && !unseen && !cd ? ' · “' + m.text + '”' : ''}
+            {dd ? 'Doodle' : cd ? 'Countdown' : stk ? 'Sticker' : gif ? 'GIF' : video ? 'Holo video' : 'Message'}{m.text && !unseen && !cd ? ' · “' + m.text + '”' : ''}
           </div>
         </div>
         <div className="flex flex-col items-end gap-1.5">

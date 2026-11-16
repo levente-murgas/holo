@@ -26,9 +26,9 @@ create table public.messages (
   id         bigint generated always as identity primary key,
   sender     uuid not null default auth.uid() references public.members (user_id),
   recipient  uuid not null references public.members (user_id),
-  clip_path  text,                                   -- path in the 'clips' bucket, null for text-only
+  clip_path  text,                                   -- path in the 'clips' bucket (a clip, GIF, sticker or doodle), null for text-only
   text       text check (char_length(text) <= 200),
-  src        text not null default 'rec' check (src in ('rec', 'holo1', 'holo4', 'gif', 'sticker', 'countdown')),
+  src        text not null default 'rec' check (src in ('rec', 'holo1', 'holo4', 'gif', 'sticker', 'countdown', 'doodle')),
   view       text not null default 'bottom' check (view in ('bottom', 'top', 'left', 'right')),
   style      jsonb check (style is null or octet_length(style::text) <= 200),   -- how the words look: { font, color }
   created_at timestamptz not null default now(),
@@ -63,7 +63,7 @@ alter publication supabase_realtime add table public.messages;
 
 -- ---------- storage: private 'clips' bucket ----------
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('clips', 'clips', false, 52428800, array['video/*', 'image/gif']);   -- image/gif: stickers   -- 50 MB per clip
+values ('clips', 'clips', false, 52428800, array['video/*', 'image/gif', 'application/json']);   -- image/gif: stickers; application/json: doodles   -- 50 MB per clip
 
 -- upload only into your own folder: clips/<your user id>/...
 create policy "members upload own clips" on storage.objects
